@@ -8,9 +8,11 @@ endif()
 find_package(glfw3 REQUIRED)
 find_package(glm REQUIRED)
 
+add_subdirectory(vendor/glad)
+
 add_executable(planet src/planet.cpp)
 target_compile_features(planet PUBLIC cxx_std_14)
-target_link_libraries(planet PUBLIC glfw glm)
+target_link_libraries(planet PUBLIC glad glfw glm)
 
 if(CMAKE_COMPILER_IS_GNUCXX)
     target_compile_options(planet PUBLIC "-Wall")
