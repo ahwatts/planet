@@ -2,13 +2,20 @@ cmake_minimum_required(VERSION 3.11.0)
 project(planet)
 
 if(WIN32 AND CMAKE_COMPILER_IS_GNUCXX)
-    set(CMAKE_PREFIX_PATH "${CMAKE_PREFIX_PATH};../deps/glfw-msys;../deps/glm")
+    set(CMAKE_PREFIX_PATH "${CMAKE_PREFIX_PATH};../deps/boost-msys;../deps/glfw-msys;../deps/glm")
+    set(BOOST_LIBRARYDIR "C:/Users/andrew/Projects/deps/boost-msys/lib")
 endif()
 
+set(Boost_DEBUG ON)
+set(Boost_USE_STATIC_LIBS ON)
+find_package(Boost REQUIRED COMPONENTS filesystem)
 find_package(glfw3 REQUIRED)
 find_package(glm REQUIRED)
 
+add_subdirectory(vendor/embed-resource)
 add_subdirectory(vendor/glad)
+
+embed_resources(SHADERS src/shaders/terrain.vert src/shaders/terrain.frag)
 
 add_executable(planet src/planet.cpp)
 target_compile_features(planet PUBLIC cxx_std_14)
