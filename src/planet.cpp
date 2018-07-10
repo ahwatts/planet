@@ -26,9 +26,8 @@ int main(int argc, char **argv) {
     std::cout << "OpenGL renderer: " << glGetString(GL_RENDERER) << std::endl;
     std::cout << "OpenGL vendor: " << glGetString(GL_VENDOR) << std::endl;
 
-    TerrainGeometry terrain;
-    terrain.initialize();
-    terrain.dispose();
+    TerrainGeometry terrain_geo;
+    TerrainShader terrain_shader;
 
     glfwDestroyWindow(window);
     glfwTerminate();

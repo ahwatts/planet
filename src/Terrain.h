@@ -8,12 +8,25 @@
 class TerrainGeometry {
 public:
     TerrainGeometry();
+    ~TerrainGeometry();
 
     void initialize();
     void dispose();
 
 private:
     GLuint m_vertex_buffer, m_elem_buffer, m_array_object;
+};
+
+class TerrainShader {
+public:
+    TerrainShader();
+    ~TerrainShader();
+
+    void initialize();
+    void dispose();
+
+private:
+    GLuint m_program;
 };
 
 #endif
