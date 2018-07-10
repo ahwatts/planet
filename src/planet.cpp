@@ -3,10 +3,10 @@
 #include <iostream>
 #include <string>
 
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
-
 #include <glm/vec3.hpp>
+
+#include "opengl.h"
+#include "Terrain.h"
 
 void bailout(const std::string &msg);
 void handleGlfwError(int code, const char *desc);
@@ -25,6 +25,10 @@ int main(int argc, char **argv) {
     std::cout << "GLSL version: " << glGetString(GL_SHADING_LANGUAGE_VERSION) << std::endl;
     std::cout << "OpenGL renderer: " << glGetString(GL_RENDERER) << std::endl;
     std::cout << "OpenGL vendor: " << glGetString(GL_VENDOR) << std::endl;
+
+    TerrainGeometry terrain;
+    terrain.initialize();
+    terrain.dispose();
 
     glfwDestroyWindow(window);
     glfwTerminate();
@@ -56,7 +60,7 @@ void initGlfw(int width, int height, const char *title, GLFWwindow **window) {
 
     glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_API);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     *window = glfwCreateWindow(width, height, title, nullptr, nullptr);
