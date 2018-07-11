@@ -22,9 +22,10 @@ embed_resources(SHADERS
   src/shaders/terrain.frag)
 
 add_executable(planet
-  src/planet.cpp
   src/Models.cpp
+  src/OpenGLUtils.cpp
   src/Terrain.cpp
+  src/planet.cpp
   ${SHADERS})
 target_compile_features(planet PUBLIC cxx_std_14)
 target_include_directories(planet PUBLIC vendor/embed-resource)

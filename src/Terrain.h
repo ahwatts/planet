@@ -3,30 +3,30 @@
 #ifndef _PLANET_TERRAIN_H_
 #define _PLANET_TERRAIN_H_
 
+#include <glm/mat4x4.hpp>
+
 #include "opengl.h"
 
-class TerrainGeometry {
+class Terrain {
 public:
-    TerrainGeometry();
-    ~TerrainGeometry();
+    static Terrain createTerrain();
+    ~Terrain();
 
-    void initialize();
-    void dispose();
+    void render(glm::mat4x4 &model, glm::mat4x4 &view, glm::mat4x4 &projection);
 
 private:
-    GLuint m_vertex_buffer, m_elem_buffer, m_array_object;
-};
+    Terrain();
 
-class TerrainShader {
-public:
-    TerrainShader();
-    ~TerrainShader();
+    void createBuffers();
+    void createProgram();
+    void createArrayObject();
 
-    void initialize();
-    void dispose();
-
-private:
+    GLuint m_array_buffer, m_elem_buffer;
     GLuint m_program;
+    GLuint m_array_object;
+
+    GLint m_position_loc, m_color_loc;
+    GLint m_model_loc, m_view_loc, m_projection_loc;
 };
 
 #endif

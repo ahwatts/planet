@@ -1,32 +1,22 @@
 // -*- mode: c++; c-basic-offset: 4; indent-tabs-mode: nil; -*-
 
+#include <cstring>
 #include <iostream>
+#include <sstream>
+#include <string>
 #include <vector>
 
 #include <glm/geometric.hpp>
+#include <glm/gtc/type_ptr.hpp>
 #include <glm/vec3.hpp>
 
 #include "Models.h"
+#include "OpenGLUtils.h"
 #include "Resource.h"
 #include "Terrain.h"
 
-GLuint createAndCompileShader(GLenum shader_type, const char* shader_src);
-GLuint createProgramFromShaders(GLuint vertex_shader, GLuint fragment_shader);
-
-TerrainGeometry::TerrainGeometry()
-    : m_vertex_buffer{0},
-      m_elem_buffer{0},
-      m_array_object{0}
-{
-    initialize();
-}
-
-TerrainGeometry::~TerrainGeometry() {
-    dispose();
-}
-
-void TerrainGeometry::initialize() {
-    dispose();
+Terrain Terrain::createTerrain() {
+    Terrain rv;
 
     std::vector<PCNVertex> vertices{};
     std::vector<unsigned int> elems{};
@@ -54,10 +44,10 @@ void TerrainGeometry::initialize() {
 
     GLuint buffers[2];
     glGenBuffers(2, buffers);
-    m_vertex_buffer = buffers[0];
-    m_elem_buffer = buffers[1];
+    rv.m_array_buffer = buffers[0];
+    rv.m_elem_buffer = buffers[1];
 
-    glBindBuffer(GL_ARRAY_BUFFER, m_vertex_buffer);
+    glBindBuffer(GL_ARRAY_BUFFER, rv.m_array_buffer);
     glBufferData(
         GL_ARRAY_BUFFER,
         vertices.size()*sizeof(PCNVertex),
@@ -65,20 +55,76 @@ void TerrainGeometry::initialize() {
         GL_STATIC_DRAW);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_elem_buffer);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, rv.m_elem_buffer);
     glBufferData(
         GL_ELEMENT_ARRAY_BUFFER,
         elems.size()*sizeof(unsigned int),
         elems.data(),
         GL_STATIC_DRAW);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
+    Resource vert_code = LOAD_RESOURCE(terrain_vert);
+    Resource frag_code = LOAD_RESOURCE(terrain_frag);
+
+    GLuint vert_shader = createAndCompileShader(GL_VERTEX_SHADER, vert_code.toString().data());
+    GLuint frag_shader = createAndCompileShader(GL_FRAGMENT_SHADER, frag_code.toString().data());
+    rv.m_program = createProgramFromShaders(vert_shader, frag_shader);
+    rv.m_position_loc = glGetAttribLocation(rv.m_program, "position");
+    rv.m_color_loc = glGetAttribLocation(rv.m_program, "color");
+    rv.m_model_loc = glGetUniformLocation(rv.m_program, "model");
+    rv.m_view_loc = glGetUniformLocation(rv.m_program, "view");
+    rv.m_projection_loc = glGetUniformLocation(rv.m_program, "projection");
+
+    glDeleteShader(vert_shader);
+    glDeleteShader(frag_shader);
+
+    glGenVertexArrays(1, &rv.m_array_object);
+    glUseProgram(rv.m_program);
+    glBindVertexArray(rv.m_array_object);
+    glBindBuffer(GL_ARRAY_BUFFER, rv.m_array_buffer);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, rv.m_elem_buffer);
+
+    glEnableVertexAttribArray(rv.m_position_loc);
+    glVertexAttribPointer(
+        rv.m_position_loc,
+        3, GL_FLOAT, GL_FALSE,
+        sizeof(PCNVertex),
+        (const void *)(0)
+    );
+
+    glEnableVertexAttribArray(rv.m_color_loc);
+    glVertexAttribPointer(
+        rv.m_color_loc,
+        4, GL_FLOAT, GL_FALSE,
+        sizeof(PCNVertex),
+        (const void *)(3*sizeof(float))
+    );
+
+    glBindVertexArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    glUseProgram(0);
+
+    return rv;
 }
 
-void TerrainGeometry::dispose() {
+Terrain::Terrain()
+    : m_array_buffer{0},
+      m_elem_buffer{0},
+      m_program{0},
+      m_array_object{0},
+      m_position_loc{-1},
+      m_color_loc{-1},
+      m_model_loc{-1},
+      m_view_loc{-1},
+      m_projection_loc{-1}
+{}
+
+Terrain::~Terrain() {
     std::vector<GLuint> bufs{};
     
-    if (glIsBuffer(m_vertex_buffer)) {
-        bufs.push_back(m_vertex_buffer);
+    if (glIsBuffer(m_array_buffer)) {
+        bufs.push_back(m_array_buffer);
     }
 
     if (glIsBuffer(m_elem_buffer)) {
@@ -89,8 +135,14 @@ void TerrainGeometry::dispose() {
         glDeleteBuffers(bufs.size(), bufs.data());
     }
 
-    m_vertex_buffer = 0;
+    m_array_buffer = 0;
     m_elem_buffer = 0;
+
+    if (glIsProgram(m_program)) {
+        glDeleteProgram(m_program);
+    }
+
+    m_program = 0;
 
     if (glIsVertexArray(m_array_object)) {
         glDeleteVertexArrays(1, &m_array_object);
@@ -99,78 +151,17 @@ void TerrainGeometry::dispose() {
     m_array_object = 0;
 }
 
-TerrainShader::TerrainShader()
-    : m_program{0}
-{
-    initialize();
-}
 
-TerrainShader::~TerrainShader() {
-    dispose();
-}
+void Terrain::render(glm::mat4x4 &model, glm::mat4x4 &view, glm::mat4x4 &projection) {
+    glUseProgram(m_program);
 
-void TerrainShader::initialize() {
-    Resource vert_code = LOAD_RESOURCE(terrain_vert);
-    Resource frag_code = LOAD_RESOURCE(terrain_frag);
+    glUniformMatrix4fv(m_model_loc, 1, GL_FALSE, glm::value_ptr(model));
+    glUniformMatrix4fv(m_view_loc, 1, GL_FALSE, glm::value_ptr(view));
+    glUniformMatrix4fv(m_projection_loc, 1, GL_FALSE, glm::value_ptr(projection));
+    glBindVertexArray(m_array_object);
 
-    GLuint vert_shader = createAndCompileShader(GL_VERTEX_SHADER, vert_code.toString().data());
-    GLuint frag_shader = createAndCompileShader(GL_FRAGMENT_SHADER, frag_code.toString().data());
-    m_program = createProgramFromShaders(vert_shader, frag_shader);
+    glDrawElements(GL_TRIANGLES, 60, GL_UNSIGNED_INT, 0);
 
-    glDeleteShader(vert_shader);
-    glDeleteShader(frag_shader);
-}
-
-void TerrainShader::dispose() {
-    if (glIsProgram(m_program)) {
-        glDeleteProgram(m_program);
-    }
-    m_program = 0;
-}
-
-GLuint createAndCompileShader(GLenum shader_type, const char* shader_src) {
-    GLuint shader = glCreateShader(shader_type);
-    GLint errlen, status, src_length = (GLint)std::strlen(shader_src);
-
-    glShaderSource(shader, 1, &shader_src, &src_length);
-    glCompileShader(shader);
-    glGetShaderiv(shader, GL_COMPILE_STATUS, &status);
-    if (!status) {
-        glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &errlen);
-        char *err = new char[errlen];
-        glGetShaderInfoLog(shader, errlen, NULL, err);
-        std::cerr << "Could not compile shader!" << std::endl;
-        std::cerr << "  error: " << err << std::endl;
-        std::cerr << "  source:" << std::endl << shader_src << std::endl;
-        delete[] err;
-        std::exit(1);
-    }
-
-    return shader;
-}
-
-GLuint createProgramFromShaders(GLuint vertex_shader, GLuint fragment_shader) {
-    GLuint program = glCreateProgram();
-    glAttachShader(program, vertex_shader);
-    glAttachShader(program, fragment_shader);
-    glLinkProgram(program);
-
-    GLint status;
-    glGetProgramiv(program, GL_LINK_STATUS, &status);
-    if (!status) {
-        GLint errlen;
-        glGetProgramiv(program, GL_INFO_LOG_LENGTH, &errlen);
-
-        char *err = new char[errlen];
-        glGetProgramInfoLog(program, errlen, NULL, err);
-        std::cerr << "Could not link shader program: " << err << std::endl;
-        delete[] err;
-
-        std::exit(1);
-    }
-
-    glDetachShader(program, vertex_shader);
-    glDetachShader(program, fragment_shader);
-
-    return program;
+    glBindVertexArray(0);
+    glUseProgram(0);
 }

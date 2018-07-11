@@ -3,6 +3,8 @@
 #include <iostream>
 #include <string>
 
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/mat4x4.hpp>
 #include <glm/vec3.hpp>
 
 #include "opengl.h"
@@ -12,6 +14,7 @@ void bailout(const std::string &msg);
 void handleGlfwError(int code, const char *desc);
 void initGlad();
 void initGlfw(int width, int height, const char *title, GLFWwindow **window);
+void runMainLoop(GLFWwindow *window);
 
 const int WINDOW_WIDTH = 1024, WINDOW_HEIGHT = 768;
 const char *WINDOW_TITLE = "Planet Demo";
@@ -26,8 +29,7 @@ int main(int argc, char **argv) {
     std::cout << "OpenGL renderer: " << glGetString(GL_RENDERER) << std::endl;
     std::cout << "OpenGL vendor: " << glGetString(GL_VENDOR) << std::endl;
 
-    TerrainGeometry terrain_geo;
-    TerrainShader terrain_shader;
+    runMainLoop(window);
 
     glfwDestroyWindow(window);
     glfwTerminate();
@@ -69,4 +71,25 @@ void initGlfw(int width, int height, const char *title, GLFWwindow **window) {
     }
 
     glfwMakeContextCurrent(*window);
+}
+
+void runMainLoop(GLFWwindow *window) {
+    Terrain terrain = Terrain::createTerrain();
+
+    glm::mat4x4 model{};
+    glm::mat4x4 view = glm::lookAt(
+        glm::vec3{ 0.0, 0.0, 5.0 },
+        glm::vec3{ 0.0, 0.0, 0.0 },
+        glm::vec3{ 0.0, 1.0, 0.0 }
+    );
+    glm::mat4x4 projection = glm::perspectiveFov(
+        20.0f, (float)WINDOW_WIDTH, (float)WINDOW_HEIGHT, 0.1f, 100.0f
+    );
+
+    while (!glfwWindowShouldClose(window)) {
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        terrain.render(model, view, projection);
+        glfwSwapBuffers(window);
+        glfwPollEvents();
+    }
 }
