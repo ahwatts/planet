@@ -76,7 +76,7 @@ void initGlfw(int width, int height, const char *title, GLFWwindow **window) {
 void runMainLoop(GLFWwindow *window) {
     Terrain terrain = Terrain::createTerrain();
 
-    glm::mat4x4 model{};
+    glm::mat4x4 model{1.0};
     glm::mat4x4 view = glm::lookAt(
         glm::vec3{ 0.0, 0.0, 5.0 },
         glm::vec3{ 0.0, 0.0, 0.0 },

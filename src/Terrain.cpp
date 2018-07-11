@@ -6,8 +6,10 @@
 #include <string>
 #include <vector>
 
+#include <glm/glm.hpp>
 #include <glm/geometric.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <glm/mat4x4.hpp>
 #include <glm/vec3.hpp>
 
 #include "Models.h"
@@ -159,7 +161,6 @@ void Terrain::render(glm::mat4x4 &model, glm::mat4x4 &view, glm::mat4x4 &project
     glUniformMatrix4fv(m_view_loc, 1, GL_FALSE, glm::value_ptr(view));
     glUniformMatrix4fv(m_projection_loc, 1, GL_FALSE, glm::value_ptr(projection));
     glBindVertexArray(m_array_object);
-
     glDrawElements(GL_TRIANGLES, 60, GL_UNSIGNED_INT, 0);
 
     glBindVertexArray(0);
