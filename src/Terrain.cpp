@@ -73,6 +73,7 @@ Terrain Terrain::createTerrain() {
     rv.m_program = createProgramFromShaders(vert_shader, frag_shader);
     rv.m_position_loc = glGetAttribLocation(rv.m_program, "position");
     rv.m_color_loc = glGetAttribLocation(rv.m_program, "color");
+    rv.m_normal_loc = glGetAttribLocation(rv.m_program, "normal");
     rv.m_model_loc = glGetUniformLocation(rv.m_program, "model");
     rv.m_view_loc = glGetUniformLocation(rv.m_program, "view");
     rv.m_projection_loc = glGetUniformLocation(rv.m_program, "projection");
@@ -102,6 +103,14 @@ Terrain Terrain::createTerrain() {
         (const void *)(3*sizeof(float))
     );
 
+    glEnableVertexAttribArray(rv.m_normal_loc);
+    glVertexAttribPointer(
+        rv.m_normal_loc,
+        3, GL_FLOAT, GL_FALSE,
+        sizeof(PCNVertex),
+        (const void *)(7*sizeof(float))
+    );
+
     glBindVertexArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
@@ -117,6 +126,7 @@ Terrain::Terrain()
       m_array_object{0},
       m_position_loc{-1},
       m_color_loc{-1},
+      m_normal_loc{-1},
       m_model_loc{-1},
       m_view_loc{-1},
       m_projection_loc{-1}
@@ -157,6 +167,7 @@ Terrain::~Terrain() {
 void Terrain::render(glm::mat4x4 &model, glm::mat4x4 &view, glm::mat4x4 &projection) {
     glUseProgram(m_program);
 
+    glEnable(GL_DEPTH_TEST);
     glUniformMatrix4fv(m_model_loc, 1, GL_FALSE, glm::value_ptr(model));
     glUniformMatrix4fv(m_view_loc, 1, GL_FALSE, glm::value_ptr(view));
     glUniformMatrix4fv(m_projection_loc, 1, GL_FALSE, glm::value_ptr(projection));

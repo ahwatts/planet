@@ -25,7 +25,7 @@ private:
     GLuint m_program;
     GLuint m_array_object;
 
-    GLint m_position_loc, m_color_loc;
+    GLint m_position_loc, m_color_loc, m_normal_loc;
     GLint m_model_loc, m_view_loc, m_projection_loc;
 };
 

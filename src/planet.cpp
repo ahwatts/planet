@@ -76,6 +76,7 @@ void initGlfw(int width, int height, const char *title, GLFWwindow **window) {
 void runMainLoop(GLFWwindow *window) {
     Terrain terrain = Terrain::createTerrain();
 
+    static float angle = 0.0;
     glm::mat4x4 model{1.0};
     glm::mat4x4 view = glm::lookAt(
         glm::vec3{ 0.0, 0.0, 5.0 },
@@ -87,9 +88,14 @@ void runMainLoop(GLFWwindow *window) {
     );
 
     while (!glfwWindowShouldClose(window)) {
+        glm::mat4x4 model2 = glm::rotate(model, glm::radians(angle), glm::vec3(0.0, 1.0, 0.0));
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        terrain.render(model, view, projection);
+        terrain.render(model2, view, projection);
         glfwSwapBuffers(window);
         glfwPollEvents();
+        angle += 1;
+        if (angle > 360.0) {
+            angle = 0.0;
+        }
     }
 }
