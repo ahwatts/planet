@@ -23,6 +23,7 @@ embed_resources(SHADERS
 
 add_executable(planet
   src/Models.cpp
+  src/Noise.cpp
   src/OpenGLUtils.cpp
   src/Terrain.cpp
   src/planet.cpp

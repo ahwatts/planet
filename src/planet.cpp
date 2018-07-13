@@ -8,6 +8,7 @@
 #include <glm/vec3.hpp>
 
 #include "opengl.h"
+#include "Noise.h"
 #include "Terrain.h"
 
 void bailout(const std::string &msg);
@@ -75,6 +76,7 @@ void initGlfw(int width, int height, const char *title, GLFWwindow **window) {
 
 void runMainLoop(GLFWwindow *window) {
     Terrain terrain = Terrain::createTerrain();
+    Perlin noisy;
 
     static float angle = 0.0;
     glm::mat4x4 model{1.0};
