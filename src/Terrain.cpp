@@ -20,29 +20,28 @@
 Terrain Terrain::createTerrain() {
     Terrain rv;
 
+    PositionsAndElements sphere = icosphere(2.0, 5);
     std::vector<PCNVertex> vertices{};
     std::vector<unsigned int> elems{};
 
-    for (unsigned int i = 0; i < ICOSAHEDRON_ELEM_COUNT; i += 3) {
-        unsigned int e1 = ICOSAHEDRON_ELEMS[i+0];
-        unsigned int e2 = ICOSAHEDRON_ELEMS[i+1];
-        unsigned int e3 = ICOSAHEDRON_ELEMS[i+2];
-        const float *p1 = ICOSAHEDRON_VERTICES[e1];
-        const float *p2 = ICOSAHEDRON_VERTICES[e2];
-        const float *p3 = ICOSAHEDRON_VERTICES[e3];
+    for (unsigned int i = 0; i < sphere.elements.size(); i += 3) {
+        unsigned int e1 = sphere.elements[i+0];
+        unsigned int e2 = sphere.elements[i+1];
+        unsigned int e3 = sphere.elements[i+2];
+        const glm::vec3 &p1 = sphere.positions[e1];
+        const glm::vec3 &p2 = sphere.positions[e2];
+        const glm::vec3 &p3 = sphere.positions[e3];
+        glm::vec3 normal = glm::normalize(glm::cross(p2 - p1, p3 - p1));
 
-        glm::vec3 pos1{p1[0], p1[1], p1[2]};
-        glm::vec3 pos2{p2[0], p2[1], p2[2]};
-        glm::vec3 pos3{p3[0], p3[1], p3[2]};
-        glm::vec3 normal = glm::normalize(glm::cross(pos2 - pos1, pos3 - pos1));
-
-        vertices.push_back({ { pos1.x, pos1.y, pos1.z }, { 0.7, 0.8, 0.7, 1.0 }, { normal.x, normal.y, normal.z } });
+        vertices.push_back({ { p1.x, p1.y, p1.z }, { 0.7, 0.8, 0.7, 1.0 }, { normal.x, normal.y, normal.z } });
         elems.push_back(vertices.size() - 1);
-        vertices.push_back({ { pos2.x, pos2.y, pos2.z }, { 0.7, 0.8, 0.7, 1.0 }, { normal.x, normal.y, normal.z } });
+        vertices.push_back({ { p2.x, p2.y, p2.z }, { 0.7, 0.8, 0.7, 1.0 }, { normal.x, normal.y, normal.z } });
         elems.push_back(vertices.size() - 1);
-        vertices.push_back({ { pos3.x, pos3.y, pos3.z }, { 0.7, 0.8, 0.7, 1.0 }, { normal.x, normal.y, normal.z } });
+        vertices.push_back({ { p3.x, p3.y, p3.z }, { 0.7, 0.8, 0.7, 1.0 }, { normal.x, normal.y, normal.z } });
         elems.push_back(vertices.size() - 1);
     }
+
+    rv.m_num_elems = elems.size();
 
     GLuint buffers[2];
     glGenBuffers(2, buffers);
@@ -124,6 +123,7 @@ Terrain::Terrain()
       m_elem_buffer{0},
       m_program{0},
       m_array_object{0},
+      m_num_elems{0},
       m_position_loc{-1},
       m_color_loc{-1},
       m_normal_loc{-1},
@@ -172,7 +172,7 @@ void Terrain::render(glm::mat4x4 &model, glm::mat4x4 &view, glm::mat4x4 &project
     glUniformMatrix4fv(m_view_loc, 1, GL_FALSE, glm::value_ptr(view));
     glUniformMatrix4fv(m_projection_loc, 1, GL_FALSE, glm::value_ptr(projection));
     glBindVertexArray(m_array_object);
-    glDrawElements(GL_TRIANGLES, 60, GL_UNSIGNED_INT, 0);
+    glDrawElements(GL_TRIANGLES, m_num_elems, GL_UNSIGNED_INT, 0);
 
     glBindVertexArray(0);
     glUseProgram(0);

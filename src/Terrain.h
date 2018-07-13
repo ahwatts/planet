@@ -24,6 +24,7 @@ private:
     GLuint m_array_buffer, m_elem_buffer;
     GLuint m_program;
     GLuint m_array_object;
+    GLuint m_num_elems;
 
     GLint m_position_loc, m_color_loc, m_normal_loc;
     GLint m_model_loc, m_view_loc, m_projection_loc;

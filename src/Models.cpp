@@ -1,8 +1,99 @@
 // -*- mode: c++; c-basic-offset: 4; indent-tabs-mode: nil; -*-
 
 #include <cmath>
+#include <map>
+#include <utility>
+#include <vector>
+
+#include <glm/gtc/epsilon.hpp>
+#include <glm/gtc/type_ptr.hpp>
+#include <glm/vec3.hpp>
 
 #include "Models.h"
+
+PositionsAndElements icosahedron() {
+    PositionsAndElements rv;
+    for (unsigned int i = 0; i < ICOSAHEDRON_VERTEX_COUNT; ++i) {
+        rv.positions.push_back(glm::make_vec3(ICOSAHEDRON_VERTICES[i]));
+    }
+    for (unsigned int i = 0; i < ICOSAHEDRON_ELEM_COUNT; ++i) {
+        rv.elements = std::vector<unsigned int>{ICOSAHEDRON_ELEMS, ICOSAHEDRON_ELEMS + ICOSAHEDRON_ELEM_COUNT};
+    }
+    return rv;
+}
+
+std::pair<unsigned int, unsigned int> edgeKey(unsigned int e1, unsigned int e2) {
+    return std::pair<unsigned int, unsigned int>{std::min(e1, e2), std::max(e1, e2)};
+}
+
+PositionsAndElements refine(const PositionsAndElements &old_vertices) {
+    PositionsAndElements new_vertices;
+    std::map<std::pair<unsigned int, unsigned int>, unsigned int> edge_map;
+    new_vertices.positions = old_vertices.positions;
+
+    for (unsigned int i = 0; i < old_vertices.elements.size(); i += 3) {
+        unsigned int
+            e1 = old_vertices.elements[i+0],
+            e2 = old_vertices.elements[i+1],
+            e3 = old_vertices.elements[i+2];
+
+        const glm::vec3
+            &p1 = old_vertices.positions[e1],
+            &p2 = old_vertices.positions[e2],
+            &p3 = old_vertices.positions[e3];
+
+        auto e12 = edge_map.find(edgeKey(e1, e2));
+        if (e12 == edge_map.end()) {
+            e12 = edge_map.insert({ edgeKey(e1, e2), new_vertices.positions.size() }).first;
+            new_vertices.positions.push_back((p1 + p2) * 0.5f);
+        }
+
+        auto e23 = edge_map.find(edgeKey(e2, e3));
+        if (e23 == edge_map.end()) {
+            e23 = edge_map.insert({ edgeKey(e2, e3), new_vertices.positions.size() }).first;
+            new_vertices.positions.push_back((p2 + p3) * 0.5f);
+        }
+
+        auto e13 = edge_map.find(edgeKey(e1, e3));
+        if (e13 == edge_map.end()) {
+            e13 = edge_map.insert({ edgeKey(e1, e3), new_vertices.positions.size() }).first;
+            new_vertices.positions.push_back((p1 + p3) * 0.5f);
+        }
+
+        new_vertices.elements.push_back(e1);
+        new_vertices.elements.push_back(e12->second);
+        new_vertices.elements.push_back(e13->second);
+
+        new_vertices.elements.push_back(e2);
+        new_vertices.elements.push_back(e23->second);
+        new_vertices.elements.push_back(e12->second);
+
+        new_vertices.elements.push_back(e3);
+        new_vertices.elements.push_back(e13->second);
+        new_vertices.elements.push_back(e23->second);
+
+        new_vertices.elements.push_back(e12->second);
+        new_vertices.elements.push_back(e23->second);
+        new_vertices.elements.push_back(e13->second);
+    }
+
+    return new_vertices;
+}
+
+
+PositionsAndElements icosphere(float radius, int refinements) {
+    PositionsAndElements rv = icosahedron();
+    for (int i = 0; i < refinements; ++i) {
+        rv = refine(rv);
+    }
+    for (unsigned int i = 0; i < rv.positions.size(); ++i) {
+        rv.positions[i] = glm::normalize(rv.positions[i]) * radius;
+    }
+    return rv;
+}
+
+// PositionsAndElements icosphere(float radius, int refinements) {
+// }
 
 const double PHI = (1.0 + std::sqrt(5.0)) / 2.0;
 
