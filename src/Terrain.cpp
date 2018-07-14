@@ -19,10 +19,12 @@
 #include "Terrain.h"
 
 float colorForVector(const Perlin &p, const glm::vec3 &pos) {
-    float r = glm::length(pos);
-    float phi = std::atan2(pos.y, pos.x) * 100.0;
-    float theta = std::acos(pos.z / r) * 100.0;
-    return p(phi, theta);
+    // float r = glm::length(pos);
+    // float phi = std::atan2(pos.y, pos.x) * 100.0;
+    // float theta = std::acos(pos.z / r) * 100.0;
+    // return p(phi, theta);
+
+    return p(pos.x, pos.y, pos.z);
 }
 
 Terrain Terrain::createTerrain() {
@@ -41,9 +43,9 @@ Terrain Terrain::createTerrain() {
         const glm::vec3 &p2 = sphere.positions[e2];
         const glm::vec3 &p3 = sphere.positions[e3];
         glm::vec3 normal = glm::normalize(glm::cross(p2 - p1, p3 - p1));
-        float c1 = std::abs(colorForVector(noise, p1)) * 0.7 + 0.3;
-        float c2 = std::abs(colorForVector(noise, p2)) * 0.7 + 0.3;
-        float c3 = std::abs(colorForVector(noise, p3)) * 0.7 + 0.3;
+        float c1 = std::abs(colorForVector(noise, p1));
+        float c2 = std::abs(colorForVector(noise, p2));
+        float c3 = std::abs(colorForVector(noise, p3));
 
         vertices.push_back({
             { p1.x, p1.y, p1.z },
