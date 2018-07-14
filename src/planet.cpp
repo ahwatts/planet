@@ -76,7 +76,6 @@ void initGlfw(int width, int height, const char *title, GLFWwindow **window) {
 
 void runMainLoop(GLFWwindow *window) {
     Terrain terrain = Terrain::createTerrain();
-    Perlin noisy;
 
     static float angle = 0.0;
     glm::mat4x4 model{1.0};
@@ -95,7 +94,7 @@ void runMainLoop(GLFWwindow *window) {
         terrain.render(model2, view, projection);
         glfwSwapBuffers(window);
         glfwPollEvents();
-        angle += 1;
+        angle += 0.5;
         if (angle > 360.0) {
             angle = 0.0;
         }

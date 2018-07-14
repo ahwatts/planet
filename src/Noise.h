@@ -8,7 +8,7 @@ public:
     PermutationTable();
     ~PermutationTable();
 
-    unsigned char table[256];
+    unsigned char table[512];
 };
 
 class Perlin {
@@ -16,12 +16,15 @@ public:
     Perlin();
     ~Perlin();
 
-    double operator()(double x) const;
+    // double operator()(double x) const;
     double operator()(double x, double y) const;
-    double operator()(double x, double y, double z) const;
+    // double operator()(double x, double y, double z) const;
 
 private:
     static double fade(double t);
+    static double lerp(double t, double a, double b);
+    
+    static double grad(int hash, double x, double y);
     
     PermutationTable m_permutation;
 };

@@ -13,14 +13,23 @@
 #include <glm/vec3.hpp>
 
 #include "Models.h"
+#include "Noise.h"
 #include "OpenGLUtils.h"
 #include "Resource.h"
 #include "Terrain.h"
 
+float colorForVector(const Perlin &p, const glm::vec3 &pos) {
+    float r = glm::length(pos);
+    float phi = std::atan2(pos.y, pos.x) * 100.0;
+    float theta = std::acos(pos.z / r) * 100.0;
+    return p(phi, theta);
+}
+
 Terrain Terrain::createTerrain() {
+    Perlin noise;
     Terrain rv;
 
-    PositionsAndElements sphere = icosphere(2.0, 5);
+    PositionsAndElements sphere = icosphere(2.0, 6);
     std::vector<PCNVertex> vertices{};
     std::vector<unsigned int> elems{};
 
@@ -32,12 +41,29 @@ Terrain Terrain::createTerrain() {
         const glm::vec3 &p2 = sphere.positions[e2];
         const glm::vec3 &p3 = sphere.positions[e3];
         glm::vec3 normal = glm::normalize(glm::cross(p2 - p1, p3 - p1));
+        float c1 = std::abs(colorForVector(noise, p1)) * 0.7 + 0.3;
+        float c2 = std::abs(colorForVector(noise, p2)) * 0.7 + 0.3;
+        float c3 = std::abs(colorForVector(noise, p3)) * 0.7 + 0.3;
 
-        vertices.push_back({ { p1.x, p1.y, p1.z }, { 0.7, 0.8, 0.7, 1.0 }, { normal.x, normal.y, normal.z } });
+        vertices.push_back({
+            { p1.x, p1.y, p1.z },
+            { c1, c1, c1, 1.0 },
+            { normal.x, normal.y, normal.z }
+        });
         elems.push_back(vertices.size() - 1);
-        vertices.push_back({ { p2.x, p2.y, p2.z }, { 0.7, 0.8, 0.7, 1.0 }, { normal.x, normal.y, normal.z } });
+
+        vertices.push_back({
+            { p2.x, p2.y, p2.z },
+            { c2, c2, c2, 1.0 },
+            { normal.x, normal.y, normal.z }
+        });
         elems.push_back(vertices.size() - 1);
-        vertices.push_back({ { p3.x, p3.y, p3.z }, { 0.7, 0.8, 0.7, 1.0 }, { normal.x, normal.y, normal.z } });
+
+        vertices.push_back({
+            { p3.x, p3.y, p3.z },
+            { c3, c3, c3, 1.0 },
+            { normal.x, normal.y, normal.z }
+        });
         elems.push_back(vertices.size() - 1);
     }
 
