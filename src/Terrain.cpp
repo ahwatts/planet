@@ -19,12 +19,23 @@
 #include "Terrain.h"
 
 float colorForVector(const Perlin &p, const glm::vec3 &pos) {
-    // float r = glm::length(pos);
-    // float phi = std::atan2(pos.y, pos.x) * 100.0;
-    // float theta = std::acos(pos.z / r) * 100.0;
-    // return p(phi, theta);
+    int octaves = 4;
+    double persistence = 0.001;
 
-    return p(pos.x, pos.y, pos.z);
+    double total = 0;
+    double frequency = 1;
+    double amplitude = 1;
+    double max_value = 0;
+
+    for (int i = 0; i < octaves; ++i) {
+        total += p(pos.x * frequency, pos.y * frequency, pos.z * frequency);
+        max_value += amplitude;
+        
+        amplitude *= persistence;
+        frequency *= 2;
+    }
+
+    return total / max_value;
 }
 
 Terrain Terrain::createTerrain() {
