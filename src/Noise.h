@@ -11,14 +11,24 @@ public:
     unsigned char table[512];
 };
 
-class Perlin {
+class NoiseFunction {
+public:
+    NoiseFunction();
+    virtual ~NoiseFunction();
+
+    // double operator()(double x) const;
+    virtual double operator()(double x, double y) const = 0;
+    virtual double operator()(double x, double y, double z) const = 0;
+};
+
+class Perlin : public NoiseFunction {
 public:
     Perlin();
     ~Perlin();
 
     // double operator()(double x) const;
-    double operator()(double x, double y) const;
-    double operator()(double x, double y, double z) const;
+    virtual double operator()(double x, double y) const;
+    virtual double operator()(double x, double y, double z) const;
 
 private:
     static double fade(double t);
@@ -30,16 +40,16 @@ private:
     PermutationTable m_permutation;
 };
 
-class OctaveNoise {
+class Octave {
 public:
-    OctaveNoise();
-    ~OctaveNoise();
+    Octave(const NoiseFunction &base);
+    ~Octave();
 
     double operator()(int octaves, double persistence, double x, double y) const;
     double operator()(int octaves, double persistence, double x, double y, double z) const;
 
 private:
-    Perlin m_noise;
+    const NoiseFunction &m_noise;
 };
 
 #endif

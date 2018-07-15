@@ -29,6 +29,10 @@ PermutationTable::PermutationTable() {
 
 PermutationTable::~PermutationTable() {}
 
+NoiseFunction::NoiseFunction() {}
+
+NoiseFunction::~NoiseFunction() {}
+
 Perlin::Perlin()
     : m_permutation{}
 {}
@@ -145,13 +149,13 @@ double Perlin::grad(int hash, double x, double y, double z) {
     }
 }
 
-OctaveNoise::OctaveNoise()
-    : m_noise{}
+Octave::Octave(const NoiseFunction &base)
+    : m_noise{base}
 {}
 
-OctaveNoise::~OctaveNoise() {}
+Octave::~Octave() {}
 
-double OctaveNoise::operator()(int octaves, double persistence, double x, double y) const {
+double Octave::operator()(int octaves, double persistence, double x, double y) const {
     double total = 0;
     double frequency = 1;
     double amplitude = 1;
@@ -168,7 +172,7 @@ double OctaveNoise::operator()(int octaves, double persistence, double x, double
     return total / max_value;
 }
 
-double OctaveNoise::operator()(int octaves, double persistence, double x, double y, double z) const {
+double Octave::operator()(int octaves, double persistence, double x, double y, double z) const {
     double total = 0;
     double frequency = 1;
     double amplitude = 1;

@@ -19,7 +19,8 @@
 #include "Terrain.h"
 
 Terrain Terrain::createTerrain() {
-    OctaveNoise noise;
+    Perlin base_noise;
+    Octave noise{base_noise};
     Terrain rv;
 
     PositionsAndElements sphere = icosphere(2.0, 6);
