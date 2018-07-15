@@ -145,6 +145,46 @@ double Perlin::grad(int hash, double x, double y, double z) {
     }
 }
 
+OctaveNoise::OctaveNoise()
+    : m_noise{}
+{}
+
+OctaveNoise::~OctaveNoise() {}
+
+double OctaveNoise::operator()(int octaves, double persistence, double x, double y) const {
+    double total = 0;
+    double frequency = 1;
+    double amplitude = 1;
+    double max_value = 0;
+
+    for (int i = 0; i < octaves; ++i) {
+        total += m_noise(x * frequency, y * frequency) * amplitude;
+        max_value += amplitude;
+        
+        amplitude *= persistence;
+        frequency *= 2;
+    }
+
+    return total / max_value;
+}
+
+double OctaveNoise::operator()(int octaves, double persistence, double x, double y, double z) const {
+    double total = 0;
+    double frequency = 1;
+    double amplitude = 1;
+    double max_value = 0;
+
+    for (int i = 0; i < octaves; ++i) {
+        total += m_noise(x * frequency, y * frequency, z * frequency) * amplitude;
+        max_value += amplitude;
+        
+        amplitude *= persistence;
+        frequency *= 2;
+    }
+
+    return total / max_value;
+}
+
 double reduceToRange(double x, double modulus) {
     while (x >= modulus) {
         x -= modulus;

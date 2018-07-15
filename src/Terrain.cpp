@@ -18,33 +18,18 @@
 #include "Resource.h"
 #include "Terrain.h"
 
-float colorForVector(const Perlin &p, const glm::vec3 &pos) {
-    int octaves = 4;
-    double persistence = 0.001;
-
-    double total = 0;
-    double frequency = 1;
-    double amplitude = 1;
-    double max_value = 0;
-
-    for (int i = 0; i < octaves; ++i) {
-        total += p(pos.x * frequency, pos.y * frequency, pos.z * frequency);
-        max_value += amplitude;
-        
-        amplitude *= persistence;
-        frequency *= 2;
-    }
-
-    return total / max_value;
-}
-
 Terrain Terrain::createTerrain() {
-    Perlin noise;
+    OctaveNoise noise;
     Terrain rv;
 
     PositionsAndElements sphere = icosphere(2.0, 6);
     std::vector<PCNVertex> vertices{};
     std::vector<unsigned int> elems{};
+
+    for (unsigned int i = 0; i < sphere.positions.size(); ++i) {
+        glm::vec3 &pos = sphere.positions[i];
+        pos *= noise(4, 0.3, pos.x, pos.y, pos.z) / 10.0 + 1.0;
+    }
 
     for (unsigned int i = 0; i < sphere.elements.size(); i += 3) {
         unsigned int e1 = sphere.elements[i+0];
@@ -54,27 +39,24 @@ Terrain Terrain::createTerrain() {
         const glm::vec3 &p2 = sphere.positions[e2];
         const glm::vec3 &p3 = sphere.positions[e3];
         glm::vec3 normal = glm::normalize(glm::cross(p2 - p1, p3 - p1));
-        float c1 = std::abs(colorForVector(noise, p1));
-        float c2 = std::abs(colorForVector(noise, p2));
-        float c3 = std::abs(colorForVector(noise, p3));
 
         vertices.push_back({
             { p1.x, p1.y, p1.z },
-            { c1, c1, c1, 1.0 },
+            { 0.5, 0.5, 0.5, 1.0 },
             { normal.x, normal.y, normal.z }
         });
         elems.push_back(vertices.size() - 1);
 
         vertices.push_back({
             { p2.x, p2.y, p2.z },
-            { c2, c2, c2, 1.0 },
+            { 0.5, 0.5, 0.5, 1.0 },
             { normal.x, normal.y, normal.z }
         });
         elems.push_back(vertices.size() - 1);
 
         vertices.push_back({
             { p3.x, p3.y, p3.z },
-            { c3, c3, c3, 1.0 },
+            { 0.5, 0.5, 0.5, 1.0 },
             { normal.x, normal.y, normal.z }
         });
         elems.push_back(vertices.size() - 1);

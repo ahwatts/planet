@@ -30,4 +30,16 @@ private:
     PermutationTable m_permutation;
 };
 
+class OctaveNoise {
+public:
+    OctaveNoise();
+    ~OctaveNoise();
+
+    double operator()(int octaves, double persistence, double x, double y) const;
+    double operator()(int octaves, double persistence, double x, double y, double z) const;
+
+private:
+    Perlin m_noise;
+};
+
 #endif
