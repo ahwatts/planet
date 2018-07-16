@@ -3,6 +3,8 @@
 #ifndef _PLANET_NOISE_H_
 #define _PLANET_NOISE_H_
 
+#include <vector>
+
 class PermutationTable {
 public:
     PermutationTable();
@@ -50,6 +52,22 @@ public:
 
 private:
     const NoiseFunction &m_noise;
+};
+
+class CubicSpline {
+public:
+    CubicSpline();
+    ~CubicSpline();
+
+    CubicSpline& addControlPoint(double x, double y);
+
+    double operator()(double x) const;
+
+private:
+    void generateCoeffs();
+
+    std::vector<std::pair<double, double> > m_cps;
+    std::vector<double[4]> m_coeffs;
 };
 
 #endif

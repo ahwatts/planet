@@ -200,3 +200,41 @@ double reduceToRange(double x, double modulus) {
 
     return x;
 }
+
+CubicSpline::CubicSpline()
+    : m_cps{},
+      m_coeffs{}
+{}
+
+CubicSpline::~CubicSpline() {}
+
+CubicSpline& CubicSpline::addControlPoint(double x, double y) {
+    double epsilon = std::numeric_limits<double>::epsilon();
+    for (auto cp : m_cps) {
+        if (std::abs(cp.first - x) < epsilon) {
+            return *this;
+        }
+    }
+
+    auto insert_before = m_cps.cbegin();
+    while (insert_before != m_cps.cend()) {
+        if (insert_before->first > x) {
+            break;
+        }
+    }
+
+    if (insert_before == m_cps.cend()) {
+        m_cps.push_back({ x, y });
+    } else {
+        m_cps.insert(insert_before, { x, y });
+    }
+
+    if (m_cps.size() >= 2) {
+        generateCoeffs();
+    }
+
+    return *this;
+}
+
+void CubicSpline::generateCoeffs() {
+}
