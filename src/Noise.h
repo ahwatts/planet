@@ -67,7 +67,7 @@ private:
     void generateCoeffs();
 
     std::vector<std::pair<double, double> > m_cps;
-    std::vector<double[4]> m_coeffs;
+    std::vector<double> m_coeffs;
 };
 
 #endif

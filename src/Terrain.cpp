@@ -6,9 +6,11 @@
 #include <string>
 #include <vector>
 
-#include <glm/glm.hpp>
+#define GLM_ENABLE_EXPERIMENTAL
 #include <glm/geometric.hpp>
+#include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <glm/gtx/io.hpp>
 #include <glm/mat4x4.hpp>
 #include <glm/vec3.hpp>
 
@@ -21,7 +23,17 @@
 Terrain Terrain::createTerrain() {
     Perlin base_noise;
     Octave noise{base_noise};
+    CubicSpline curve;
     Terrain rv;
+
+    curve
+        .addControlPoint(-2.0, -2.0)
+        .addControlPoint(-1.0, -1.0)
+        .addControlPoint(-0.5, -0.5)
+        .addControlPoint(0.0, 0.0)
+        .addControlPoint(0.5, 0.5)
+        .addControlPoint(1.0, 1.0)
+        .addControlPoint(2.0, 2.0);
 
     PositionsAndElements sphere = icosphere(2.0, 6);
     std::vector<PCNVertex> vertices{};
@@ -29,7 +41,14 @@ Terrain Terrain::createTerrain() {
 
     for (unsigned int i = 0; i < sphere.positions.size(); ++i) {
         glm::vec3 &pos = sphere.positions[i];
-        pos *= noise(4, 0.3, pos.x, pos.y, pos.z) / 10.0 + 1.0;
+        double base_noise = noise(4, 0.3, pos.x, pos.y, pos.z);
+        double curved_noise = base_noise * 10.0 + 1.0;
+        if (i % 1000 == 0) {
+            std::cout << "pos = " << pos << std::endl;
+            std::cout << "base_noise = " << base_noise << std::endl;
+            std::cout << "curved_noise = " << curved_noise << std::endl;
+        }
+        pos *= curved_noise;
     }
 
     for (unsigned int i = 0; i < sphere.elements.size(); i += 3) {

@@ -221,6 +221,7 @@ CubicSpline& CubicSpline::addControlPoint(double x, double y) {
         if (insert_before->first > x) {
             break;
         }
+        ++insert_before;
     }
 
     if (insert_before == m_cps.cend()) {
@@ -236,5 +237,52 @@ CubicSpline& CubicSpline::addControlPoint(double x, double y) {
     return *this;
 }
 
+double CubicSpline::operator()(double x) const {
+    if (x < m_cps.front().first) {
+        return m_cps.front().second;
+    }
+
+    if (x > m_cps.back().first) {
+        return m_cps.back().second;
+    }
+
+    int i, n = m_cps.size() - 1;
+    for (i = n - 1; i >= 0; --i) {
+        if (x - m_cps[i].first >= 0) {
+            break;
+        }
+    }
+
+    double alpha = x - m_cps[i].first;
+    double h = m_cps[i+1].first - m_cps[i].first;
+    double rv = 0.5*m_coeffs[i] + alpha*(m_coeffs[i+1] - m_coeffs[i])/(6*h);
+    rv = -1*(h/6.0)*(m_coeffs[i+1] + 2*m_coeffs[i]) + (m_cps[i+1].second - m_cps[i].second)/h + alpha*rv;
+    return m_cps[i].second + alpha*rv;
+}
+
 void CubicSpline::generateCoeffs() {
+    int n = m_cps.size() - 1;
+    m_coeffs.clear();
+    m_coeffs.resize(n+1);
+    std::vector<double> h(n), b(n), u(n), v(n);
+
+    for (int i = 0; i < n; ++i) {
+        h[i] = m_cps[i+1].first - m_cps[i].first;
+        b[i] = (m_cps[i+1].second - m_cps[i].second) / h[i];
+    }
+
+    u[1] = 2*(h[0] + h[1]);
+    v[1] = 6*(b[1] - b[0]);
+
+    for (int i = 2; i < n; ++i) {
+        u[i] = 2*(h[i] + h[i-1]) - h[i-1]*h[i-1]/u[i-1];
+        v[i] = 6*(b[i] - b[i-1]) - h[i-1]*v[i-1]/u[i-1];
+    }
+
+    m_coeffs[n] = 0;
+    for (int i = n-1; i > 0; --i) {
+        m_coeffs[i] = (v[i] - h[i]*m_coeffs[i+1]) / u[i];
+    }
+    m_coeffs[0] = 0;
+
 }
