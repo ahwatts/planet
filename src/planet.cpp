@@ -8,6 +8,7 @@
 #include <glm/vec3.hpp>
 
 #include "opengl.h"
+#include "Curve.h"
 #include "Terrain.h"
 
 void bailout(const std::string &msg);
@@ -28,6 +29,8 @@ int main(int argc, char **argv) {
     std::cout << "GLSL version: " << glGetString(GL_SHADING_LANGUAGE_VERSION) << std::endl;
     std::cout << "OpenGL renderer: " << glGetString(GL_RENDERER) << std::endl;
     std::cout << "OpenGL vendor: " << glGetString(GL_VENDOR) << std::endl;
+
+    glEnable(GL_SRGB);
 
     runMainLoop(window);
 
@@ -75,6 +78,15 @@ void initGlfw(int width, int height, const char *title, GLFWwindow **window) {
 
 void runMainLoop(GLFWwindow *window) {
     Terrain terrain = Terrain::createTerrain();
+    // CubicSpline curve;
+    // curve
+    //     .addControlPoint(-1.0, -1.0)
+    //     .addControlPoint(-0.5, -0.5)
+    //     .addControlPoint(0.0, 0.0)
+    //     .addControlPoint(0.2, 0.6)
+    //     .addControlPoint(0.7, 0.7)
+    //     .addControlPoint(1.0, 1.0);
+    // CurveDisplay curve_disp = CurveDisplay::createCurveDisplay(curve, -1.0, 1.0, -1.0, 1.0, 5000);
 
     static float angle = 0.0;
     glm::mat4x4 model{1.0};
@@ -91,6 +103,7 @@ void runMainLoop(GLFWwindow *window) {
         glm::mat4x4 model2 = glm::rotate(model, glm::radians(angle), glm::vec3(0.0, 1.0, 0.0));
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         terrain.render(model2, view, projection);
+        // curve_disp.render();
         glfwSwapBuffers(window);
         glfwPollEvents();
         angle += 0.5;

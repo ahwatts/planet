@@ -1,5 +1,6 @@
 // -*- mode: c++; c-basic-offset: 4; indent-tabs-mode: nil; -*-
 
+#include <map>
 #include <vector>
 
 #include <glm/geometric.hpp>
@@ -8,6 +9,7 @@
 #include <glm/mat4x4.hpp>
 #include <glm/vec3.hpp>
 
+#include "Curve.h"
 #include "Models.h"
 #include "Noise.h"
 #include "OpenGLUtils.h"
@@ -21,54 +23,87 @@ Terrain Terrain::createTerrain() {
     Terrain rv;
 
     curve
-        .addControlPoint(-2.0, -2.0)
         .addControlPoint(-1.0, -1.0)
         .addControlPoint(-0.5, -0.5)
         .addControlPoint(0.0, 0.0)
-        .addControlPoint(0.6, 0.2)
-        .addControlPoint(1.0, 1.0)
-        .addControlPoint(2.0, 2.0);
+        .addControlPoint(0.2, 0.6)
+        .addControlPoint(1.0, 1.0);
 
-    PositionsAndElements sphere = icosphere(2.0, 5);
-    std::vector<PCNVertex> vertices{};
+    PositionsAndElements sphere = icosphere(2.0, 6);
+    std::vector<PCNVertex> vertices(sphere.positions.size());
     std::vector<unsigned int> elems{};
 
+    // Adjust the vertex positions with some noise.
     for (unsigned int i = 0; i < sphere.positions.size(); ++i) {
         glm::vec3 &pos = sphere.positions[i];
-        double base_noise = noise(4, 0.3, pos.x, pos.y, pos.z);
-        double curved_noise = curve(base_noise);
+        // double perlin_noise = base_noise(pos.x, pos.y, pos.z);
+        double octave_noise = noise(4, 0.3, pos.x, pos.y, pos.z);
+        double curved_noise = curve(octave_noise);
         pos *= curved_noise/10.0 + 1.0;
     }
 
+    std::map<unsigned int, std::vector<unsigned int> > adj_map;
     for (unsigned int i = 0; i < sphere.elements.size(); i += 3) {
-        unsigned int e1 = sphere.elements[i+0];
-        unsigned int e2 = sphere.elements[i+1];
-        unsigned int e3 = sphere.elements[i+2];
-        const glm::vec3 &p1 = sphere.positions[e1];
-        const glm::vec3 &p2 = sphere.positions[e2];
-        const glm::vec3 &p3 = sphere.positions[e3];
-        glm::vec3 normal = glm::normalize(glm::cross(p2 - p1, p3 - p1));
+        adj_map[sphere.elements[i+0]].push_back(i);
+        adj_map[sphere.elements[i+1]].push_back(i);
+        adj_map[sphere.elements[i+2]].push_back(i);
+    }
 
-        vertices.push_back({
-            { p1.x, p1.y, p1.z },
-            { 0.5, 0.5, 0.5, 1.0 },
-            { normal.x, normal.y, normal.z }
-        });
-        elems.push_back(vertices.size() - 1);
+    // For each face A in the mesh...
+    for (unsigned int i = 0; i < sphere.elements.size(); i += 3) {
+        unsigned int ae1 = sphere.elements[i+0];
+        unsigned int ae2 = sphere.elements[i+1];
+        unsigned int ae3 = sphere.elements[i+2];
+        const glm::vec3 &ap1 = sphere.positions[ae1];
+        const glm::vec3 &ap2 = sphere.positions[ae2];
+        const glm::vec3 &ap3 = sphere.positions[ae3];
+        glm::vec3 a_norm = glm::normalize(glm::cross(ap2 - ap1, ap3 - ap1));
 
-        vertices.push_back({
-            { p2.x, p2.y, p2.z },
-            { 0.5, 0.5, 0.5, 1.0 },
-            { normal.x, normal.y, normal.z }
-        });
-        elems.push_back(vertices.size() - 1);
+        // For each vertex in this face.
+        for (auto ve : { ae1, ae2, ae3 }) {
+            glm::vec3 vp = sphere.positions[ve];
 
-        vertices.push_back({
-            { p3.x, p3.y, p3.z },
-            { 0.5, 0.5, 0.5, 1.0 },
-            { normal.x, normal.y, normal.z }
-        });
-        elems.push_back(vertices.size() - 1);
+            // Start with the facet normal.
+            glm::vec3 normal = a_norm;
+            
+            std::vector<unsigned int> &adjacent = adj_map[ve];
+            for (auto j : adjacent) {
+                if (j != i) {
+                    unsigned int be1 = sphere.elements[j+0];
+                    unsigned int be2 = sphere.elements[j+1];
+                    unsigned int be3 = sphere.elements[j+2];
+                    const glm::vec3 &bp1 = sphere.positions[be1];
+                    const glm::vec3 &bp2 = sphere.positions[be2];
+                    const glm::vec3 &bp3 = sphere.positions[be3];
+                    glm::vec3 b_cross = glm::cross(bp2 - bp1, bp3 - bp1);
+                    float b_area = 0.5*glm::length(b_cross);
+                    glm::vec3 b_norm = glm::normalize(b_cross);
+
+                    glm::vec3 s1, s2;
+                    if (ve == ae1) {
+                        s1 = ap1 - ap2;
+                        s2 = ap1 - ap3;
+                    } else if (ve == ae2) {
+                        s1 = ap2 - ap1;
+                        s2 = ap2 - ap3;
+                    } else if (ve == ae3) {
+                        s1 = ap3 - ap1;
+                        s2 = ap3 - ap2;
+                    }
+
+                    float angle = std::acos(glm::dot(s1, s2) / glm::length(s1) / glm::length(s2));
+                    normal += b_norm * b_area * angle;
+                }
+            }
+
+            normal = glm::normalize(normal);
+            elems.push_back(vertices.size());
+            vertices.push_back({
+                { vp.x, vp.y, vp.z },
+                { 0.5, 0.5, 0.5, 1.0 },
+                { normal.x, normal.y, normal.z }
+            });
+        }
     }
 
     rv.m_num_elems = elems.size();

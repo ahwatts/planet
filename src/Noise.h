@@ -54,20 +54,4 @@ private:
     const NoiseFunction &m_noise;
 };
 
-class CubicSpline {
-public:
-    CubicSpline();
-    ~CubicSpline();
-
-    CubicSpline& addControlPoint(double x, double y);
-
-    double operator()(double x) const;
-
-private:
-    void generateCoeffs();
-
-    std::vector<std::pair<double, double> > m_cps;
-    std::vector<double> m_coeffs;
-};
-
 #endif

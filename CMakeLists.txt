@@ -18,6 +18,8 @@ add_subdirectory(vendor/embed-resource)
 add_subdirectory(vendor/glad)
 
 embed_resources(SHADERS
+  src/shaders/curve.vert
+  src/shaders/curve.frag
   src/shaders/terrain.vert
   src/shaders/terrain.frag)
 
