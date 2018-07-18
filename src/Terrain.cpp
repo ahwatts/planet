@@ -29,9 +29,9 @@ Terrain Terrain::createTerrain() {
         .addControlPoint(0.2, 0.6)
         .addControlPoint(1.0, 1.0);
 
-    PositionsAndElements sphere = icosphere(2.0, 6);
+    PositionsAndElements sphere = icosphere(2.0, 5);
     std::vector<PCNVertex> vertices(sphere.positions.size());
-    std::vector<unsigned int> elems{};
+    // std::vector<unsigned int> elems{};
 
     // Adjust the vertex positions with some noise.
     for (unsigned int i = 0; i < sphere.positions.size(); ++i) {
@@ -97,16 +97,17 @@ Terrain Terrain::createTerrain() {
             }
 
             normal = glm::normalize(normal);
-            elems.push_back(vertices.size());
-            vertices.push_back({
+            // elems.push_back(vertices.size());
+            vertices[ve] = {
                 { vp.x, vp.y, vp.z },
                 { 0.5, 0.5, 0.5, 1.0 },
                 { normal.x, normal.y, normal.z }
-            });
+            };
+            // vertices.push_back();
         }
     }
 
-    rv.m_num_elems = elems.size();
+    rv.m_num_elems = sphere.elements.size();
 
     GLuint buffers[2];
     glGenBuffers(2, buffers);
@@ -124,8 +125,8 @@ Terrain Terrain::createTerrain() {
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, rv.m_elem_buffer);
     glBufferData(
         GL_ELEMENT_ARRAY_BUFFER,
-        elems.size()*sizeof(unsigned int),
-        elems.data(),
+        sphere.elements.size()*sizeof(unsigned int),
+        sphere.elements.data(),
         GL_STATIC_DRAW);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
