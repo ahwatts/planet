@@ -8,7 +8,6 @@
 #include <glm/vec3.hpp>
 
 #include "opengl.h"
-#include "Noise.h"
 #include "Terrain.h"
 
 void bailout(const std::string &msg);

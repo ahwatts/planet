@@ -26,7 +26,7 @@ public:
 class Perlin : public NoiseFunction {
 public:
     Perlin();
-    ~Perlin();
+    virtual ~Perlin() noexcept;
 
     // double operator()(double x) const;
     virtual double operator()(double x, double y) const;

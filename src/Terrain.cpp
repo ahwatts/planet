@@ -1,16 +1,10 @@
 // -*- mode: c++; c-basic-offset: 4; indent-tabs-mode: nil; -*-
 
-#include <cstring>
-#include <iostream>
-#include <sstream>
-#include <string>
 #include <vector>
 
-#define GLM_ENABLE_EXPERIMENTAL
 #include <glm/geometric.hpp>
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
-#include <glm/gtx/io.hpp>
 #include <glm/mat4x4.hpp>
 #include <glm/vec3.hpp>
 
@@ -31,24 +25,19 @@ Terrain Terrain::createTerrain() {
         .addControlPoint(-1.0, -1.0)
         .addControlPoint(-0.5, -0.5)
         .addControlPoint(0.0, 0.0)
-        .addControlPoint(0.5, 0.5)
+        .addControlPoint(0.6, 0.2)
         .addControlPoint(1.0, 1.0)
         .addControlPoint(2.0, 2.0);
 
-    PositionsAndElements sphere = icosphere(2.0, 6);
+    PositionsAndElements sphere = icosphere(2.0, 5);
     std::vector<PCNVertex> vertices{};
     std::vector<unsigned int> elems{};
 
     for (unsigned int i = 0; i < sphere.positions.size(); ++i) {
         glm::vec3 &pos = sphere.positions[i];
         double base_noise = noise(4, 0.3, pos.x, pos.y, pos.z);
-        double curved_noise = base_noise * 10.0 + 1.0;
-        if (i % 1000 == 0) {
-            std::cout << "pos = " << pos << std::endl;
-            std::cout << "base_noise = " << base_noise << std::endl;
-            std::cout << "curved_noise = " << curved_noise << std::endl;
-        }
-        pos *= curved_noise;
+        double curved_noise = curve(base_noise);
+        pos *= curved_noise/10.0 + 1.0;
     }
 
     for (unsigned int i = 0; i < sphere.elements.size(); i += 3) {
@@ -203,7 +192,6 @@ Terrain::~Terrain() {
 
     m_array_object = 0;
 }
-
 
 void Terrain::render(glm::mat4x4 &model, glm::mat4x4 &view, glm::mat4x4 &projection) {
     glUseProgram(m_program);

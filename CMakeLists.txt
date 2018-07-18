@@ -22,6 +22,7 @@ embed_resources(SHADERS
   src/shaders/terrain.frag)
 
 add_executable(planet
+  src/Curve.cpp
   src/Models.cpp
   src/Noise.cpp
   src/OpenGLUtils.cpp
