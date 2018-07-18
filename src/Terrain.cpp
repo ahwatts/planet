@@ -37,7 +37,7 @@ Terrain Terrain::createTerrain() {
     for (unsigned int i = 0; i < sphere.positions.size(); ++i) {
         glm::vec3 &pos = sphere.positions[i];
         // double perlin_noise = base_noise(pos.x, pos.y, pos.z);
-        double octave_noise = noise(4, 0.3, pos.x, pos.y, pos.z);
+        double octave_noise = noise(4, 0.4, pos.x, pos.y, pos.z);
         double curved_noise = curve(octave_noise);
         pos *= curved_noise/10.0 + 1.0;
     }
@@ -57,43 +57,39 @@ Terrain Terrain::createTerrain() {
         const glm::vec3 &ap1 = sphere.positions[ae1];
         const glm::vec3 &ap2 = sphere.positions[ae2];
         const glm::vec3 &ap3 = sphere.positions[ae3];
-        glm::vec3 a_norm = glm::normalize(glm::cross(ap2 - ap1, ap3 - ap1));
 
         // For each vertex in this face.
         for (auto ve : { ae1, ae2, ae3 }) {
             glm::vec3 vp = sphere.positions[ve];
 
-            // Start with the facet normal.
-            glm::vec3 normal = a_norm;
+            glm::vec3 normal = { 0.0, 0.0, 0.0 };
             
             std::vector<unsigned int> &adjacent = adj_map[ve];
             for (auto j : adjacent) {
-                if (j != i) {
-                    unsigned int be1 = sphere.elements[j+0];
-                    unsigned int be2 = sphere.elements[j+1];
-                    unsigned int be3 = sphere.elements[j+2];
-                    const glm::vec3 &bp1 = sphere.positions[be1];
-                    const glm::vec3 &bp2 = sphere.positions[be2];
-                    const glm::vec3 &bp3 = sphere.positions[be3];
-                    glm::vec3 b_cross = glm::cross(bp2 - bp1, bp3 - bp1);
-                    float b_area = 0.5*glm::length(b_cross);
-                    glm::vec3 b_norm = glm::normalize(b_cross);
+                unsigned int be1 = sphere.elements[j+0];
+                unsigned int be2 = sphere.elements[j+1];
+                unsigned int be3 = sphere.elements[j+2];
+                const glm::vec3 &bp1 = sphere.positions[be1];
+                const glm::vec3 &bp2 = sphere.positions[be2];
+                const glm::vec3 &bp3 = sphere.positions[be3];
+                glm::vec3 b_cross = glm::cross(bp2 - bp1, bp3 - bp1);
+                float b_area = 0.5*glm::length(b_cross);
+                glm::vec3 b_norm = glm::normalize(b_cross);
 
-                    glm::vec3 s1, s2;
-                    if (ve == ae1) {
-                        s1 = ap1 - ap2;
-                        s2 = ap1 - ap3;
-                    } else if (ve == ae2) {
-                        s1 = ap2 - ap1;
-                        s2 = ap2 - ap3;
-                    } else if (ve == ae3) {
-                        s1 = ap3 - ap1;
-                        s2 = ap3 - ap2;
-                    }
-
-                    float angle = std::acos(glm::dot(s1, s2) / glm::length(s1) / glm::length(s2));
-                    normal += b_norm * b_area * angle;
+                glm::vec3 s1, s2;
+                if (ve == ae1) {
+                    s1 = ap1 - ap2;
+                    s2 = ap1 - ap3;
+                } else if (ve == ae2) {
+                    s1 = ap2 - ap1;
+                    s2 = ap2 - ap3;
+                } else if (ve == ae3) {
+                    s1 = ap3 - ap1;
+                    s2 = ap3 - ap2;
                 }
+
+                float angle = std::acos(glm::dot(s1, s2) / glm::length(s1) / glm::length(s2));
+                normal += b_norm * b_area * angle;
             }
 
             normal = glm::normalize(normal);
