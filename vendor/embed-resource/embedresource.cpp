@@ -5,11 +5,10 @@
 using namespace std;
 using namespace boost::filesystem;
 
-int main(int argc, char** argv)
-{
+int main(int argc, char** argv) {
     if (argc < 3) {
         fprintf(stderr, "USAGE: %s {sym} {rsrc}\n\n"
-                        "  Creates {sym}.c from the contents of {rsrc}\n",
+                        "  Creates {sym}.cpp from the contents of {rsrc}\n",
                 argv[0]);
         return EXIT_FAILURE;
     }
@@ -27,8 +26,8 @@ int main(int argc, char** argv)
 
     boost::filesystem::ifstream ifs{src};
 
-    ofs << "#include <stdlib.h>" << endl;
-    ofs << "const char _resource_" << sym << "[] = {" << endl;
+    ofs << "#include <cstdlib>" << endl;
+    ofs << "extern const char _resource_" << sym << "[] = {" << endl;
 
     size_t lineCount = 0;
     while (!ifs.eof())
@@ -44,7 +43,7 @@ int main(int argc, char** argv)
 
 
     ofs << "};" << endl;
-    ofs << "const size_t _resource_" << sym << "_len = sizeof(_resource_" << sym << ");";
+    ofs << "extern const std::size_t _resource_" << sym << "_len = sizeof(_resource_" << sym << ");";
 
     return EXIT_SUCCESS;
 }

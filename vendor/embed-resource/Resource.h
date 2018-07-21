@@ -1,4 +1,9 @@
+// -*- mode: c++; c-basic-offset: 4; indent-tabs-mode: nil; -*-
+
 #pragma once
+#ifndef _PLANET_VENDOR_EMBED_RESOURCE_H_
+#define _PLANET_VENDOR_EMBED_RESOURCE_H_
+
 #include <string>
 
 class Resource {
@@ -16,9 +21,11 @@ public:
 private:
     const char* resource_data;
     const size_t data_len;
-
 };
+
 #define LOAD_RESOURCE(RESOURCE) ([]() {                      \
         extern const char _resource_##RESOURCE[]; extern const size_t _resource_##RESOURCE##_len;   \
         return Resource(_resource_##RESOURCE, _resource_##RESOURCE##_len);  \
     })()
+
+#endif

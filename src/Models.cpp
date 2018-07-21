@@ -1,6 +1,8 @@
 // -*- mode: c++; c-basic-offset: 4; indent-tabs-mode: nil; -*-
 
+#include <algorithm>
 #include <cmath>
+#include <iostream>
 #include <map>
 #include <utility>
 #include <vector>
@@ -44,19 +46,19 @@ PositionsAndElements refine(const PositionsAndElements &old_vertices) {
 
         auto e12 = edge_map.find(edgeKey(e1, e2));
         if (e12 == edge_map.end()) {
-            e12 = edge_map.insert({ edgeKey(e1, e2), new_vertices.positions.size() }).first;
+            e12 = edge_map.insert({ edgeKey(e1, e2), static_cast<unsigned int>(new_vertices.positions.size()) }).first;
             new_vertices.positions.push_back((p1 + p2) * 0.5f);
         }
 
         auto e23 = edge_map.find(edgeKey(e2, e3));
         if (e23 == edge_map.end()) {
-            e23 = edge_map.insert({ edgeKey(e2, e3), new_vertices.positions.size() }).first;
+            e23 = edge_map.insert({ edgeKey(e2, e3), static_cast<unsigned int>(new_vertices.positions.size()) }).first;
             new_vertices.positions.push_back((p2 + p3) * 0.5f);
         }
 
         auto e13 = edge_map.find(edgeKey(e1, e3));
         if (e13 == edge_map.end()) {
-            e13 = edge_map.insert({ edgeKey(e1, e3), new_vertices.positions.size() }).first;
+            e13 = edge_map.insert({ edgeKey(e1, e3), static_cast<unsigned int>(new_vertices.positions.size()) }).first;
             new_vertices.positions.push_back((p1 + p3) * 0.5f);
         }
 
@@ -86,8 +88,8 @@ PositionsAndElements icosphere(float radius, int refinements) {
     for (int i = 0; i < refinements; ++i) {
         rv = refine(rv);
     }
-    for (unsigned int i = 0; i < rv.positions.size(); ++i) {
-        rv.positions[i] = glm::normalize(rv.positions[i]) * radius;
+    for (auto &pos : rv.positions) {
+        pos = glm::normalize(pos) * radius;
     }
     return rv;
 }
@@ -95,9 +97,9 @@ PositionsAndElements icosphere(float radius, int refinements) {
 // PositionsAndElements icosphere(float radius, int refinements) {
 // }
 
-const double PHI = (1.0 + std::sqrt(5.0)) / 2.0;
+extern const double PHI = (1.0 + std::sqrt(5.0)) / 2.0;
 
-const float ICOSAHEDRON_VERTICES[12][3] = {
+extern const double ICOSAHEDRON_VERTICES[12][3] = {
     {  1.0,  PHI,  0.0 }, // 0
     { -1.0,  PHI,  0.0 }, // 1
     {  1.0, -PHI,  0.0 }, // 2
@@ -112,9 +114,9 @@ const float ICOSAHEDRON_VERTICES[12][3] = {
     {  0.0, -1.0, -PHI }, // 11
 };
 
-const unsigned int ICOSAHEDRON_VERTEX_COUNT = sizeof(ICOSAHEDRON_VERTICES) / sizeof(ICOSAHEDRON_VERTICES[0]);
+extern const unsigned int ICOSAHEDRON_VERTEX_COUNT = sizeof(ICOSAHEDRON_VERTICES) / sizeof(ICOSAHEDRON_VERTICES[0]);
 
-const unsigned int ICOSAHEDRON_ELEMS[60] = {
+extern const unsigned int ICOSAHEDRON_ELEMS[60] = {
     1, 7, 6,
     1, 6, 8,
     1, 8, 0,
@@ -137,4 +139,4 @@ const unsigned int ICOSAHEDRON_ELEMS[60] = {
     11, 2, 3,
 };
 
-const unsigned int ICOSAHEDRON_ELEM_COUNT = sizeof(ICOSAHEDRON_ELEMS) / sizeof(ICOSAHEDRON_ELEMS[0]);
+extern const unsigned int ICOSAHEDRON_ELEM_COUNT = sizeof(ICOSAHEDRON_ELEMS) / sizeof(ICOSAHEDRON_ELEMS[0]);

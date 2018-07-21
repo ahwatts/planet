@@ -1,5 +1,6 @@
 // -*- mode: c++; c-basic-offset: 4; indent-tabs-mode: nil; -*-
 
+#include <algorithm>
 #include <iostream>
 #include <vector>
 
@@ -58,7 +59,7 @@ double CubicSpline::operator()(double x) const {
         return m_cps.back().second;
     }
 
-    int i, n = m_cps.size() - 1;
+    int i, n = static_cast<int>(m_cps.size()) - 1;
     for (i = n - 1; i >= 0; --i) {
         if (x - m_cps[i].first >= 0) {
             break;
@@ -73,7 +74,7 @@ double CubicSpline::operator()(double x) const {
 }
 
 void CubicSpline::generateCoeffs() {
-    int n = m_cps.size() - 1;
+    int n = static_cast<int>(m_cps.size()) - 1;
     m_coeffs.clear();
     m_coeffs.resize(n+1);
     std::vector<double> h(n), b(n), u(n), v(n);
@@ -83,18 +84,24 @@ void CubicSpline::generateCoeffs() {
         b[i] = (m_cps[i+1].second - m_cps[i].second) / h[i];
     }
 
-    u[1] = 2*(h[0] + h[1]);
-    v[1] = 6*(b[1] - b[0]);
+    if (n > 1) {
+        u[1] = 2*(h[0] + h[1]);
+        v[1] = 6*(b[1] - b[0]);
 
-    for (int i = 2; i < n; ++i) {
-        u[i] = 2*(h[i] + h[i-1]) - h[i-1]*h[i-1]/u[i-1];
-        v[i] = 6*(b[i] - b[i-1]) - h[i-1]*v[i-1]/u[i-1];
+        for (int i = 2; i < n; ++i) {
+            u[i] = 2*(h[i] + h[i-1]) - h[i-1]*h[i-1]/u[i-1];
+            v[i] = 6*(b[i] - b[i-1]) - h[i-1]*v[i-1]/u[i-1];
+        }
     }
 
     m_coeffs[n] = 0;
-    for (int i = n-1; i > 0; --i) {
-        m_coeffs[i] = (v[i] - h[i]*m_coeffs[i+1]) / u[i];
+
+    if (n > 1) {
+        for (int i = n-1; i > 0; --i) {
+            m_coeffs[i] = (v[i] - h[i]*m_coeffs[i+1]) / u[i];
+        }
     }
+
     m_coeffs[0] = 0;
 }
 
@@ -115,7 +122,7 @@ CurveDisplay CurveDisplay::createCurveDisplay(CubicSpline &curve, double min_x, 
 
         // std::cout << "(" << x << ", " << y << ") -> (" << clip_x << ", " << clip_y << ")" << std::endl;
 
-        elements.push_back(positions.size());
+        elements.push_back(static_cast<unsigned int>(positions.size()));
         positions.push_back({ clip_x, clip_y });
     }
 
@@ -148,7 +155,7 @@ CurveDisplay::~CurveDisplay() {
     }
 
     if (bufs_to_delete.size() > 0) {
-        glDeleteBuffers(bufs_to_delete.size(), bufs_to_delete.data());
+        glDeleteBuffers(static_cast<GLsizei>(bufs_to_delete.size()), bufs_to_delete.data());
     }
 
     m_array_buffer = 0;
@@ -201,7 +208,7 @@ void CurveDisplay::createBuffers(const std::vector<glm::vec2> &vertices, const s
         GL_STATIC_DRAW);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
-    m_num_elems = elems.size();
+    m_num_elems = static_cast<unsigned int>(elems.size());
 }
 
 void CurveDisplay::createProgram() {

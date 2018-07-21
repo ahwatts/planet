@@ -16,9 +16,9 @@ PermutationTable::PermutationTable() {
         table[i] = i;
     }
 
+    std::uniform_int_distribution<int> random_int{0, std::numeric_limits<int>::max()};
     for (int i = 255; i > 0; --i) {
-        std::uniform_int_distribution<int> random_int{0, i};
-        int sucker = random_int(engine);
+        int sucker = random_int(engine) % i;
         std::swap(table[sucker], table[i]);
     }
 

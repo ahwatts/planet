@@ -1,6 +1,7 @@
 // -*- mode: c++; c-basic-offset: 4; indent-tabs-mode: nil; -*-
 
 #include <map>
+#include <iostream>
 #include <vector>
 
 #include <glm/geometric.hpp>
@@ -73,7 +74,7 @@ Terrain Terrain::createTerrain() {
                 const glm::vec3 &bp2 = sphere.positions[be2];
                 const glm::vec3 &bp3 = sphere.positions[be3];
                 glm::vec3 b_cross = glm::cross(bp2 - bp1, bp3 - bp1);
-                float b_area = 0.5*glm::length(b_cross);
+                float b_area = 0.5f*glm::length(b_cross);
                 glm::vec3 b_norm = glm::normalize(b_cross);
 
                 glm::vec3 s1, s2;
@@ -103,7 +104,7 @@ Terrain Terrain::createTerrain() {
         }
     }
 
-    rv.m_num_elems = sphere.elements.size();
+    rv.m_num_elems = static_cast<unsigned int>(sphere.elements.size());
 
     GLuint buffers[2];
     glGenBuffers(2, buffers);
@@ -206,7 +207,7 @@ Terrain::~Terrain() {
     }
 
     if (bufs.size() > 0) {
-        glDeleteBuffers(bufs.size(), bufs.data());
+        glDeleteBuffers(static_cast<GLsizei>(bufs.size()), bufs.data());
     }
 
     m_array_buffer = 0;
@@ -234,7 +235,6 @@ void Terrain::render(glm::mat4x4 &model, glm::mat4x4 &view, glm::mat4x4 &project
     glUniformMatrix4fv(m_projection_loc, 1, GL_FALSE, glm::value_ptr(projection));
     glBindVertexArray(m_array_object);
     glDrawElements(GL_TRIANGLES, m_num_elems, GL_UNSIGNED_INT, 0);
-
     glBindVertexArray(0);
     glUseProgram(0);
 }
