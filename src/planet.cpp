@@ -8,7 +8,9 @@
 #include <glm/vec3.hpp>
 
 #include "opengl.h"
+
 #include "Curve.h"
+#include "Ocean.h"
 #include "Terrain.h"
 
 void bailout(const std::string &msg);
@@ -77,16 +79,20 @@ void initGlfw(int width, int height, const char *title, GLFWwindow **window) {
 }
 
 void runMainLoop(GLFWwindow *window) {
-    Terrain terrain = Terrain::createTerrain();
-    // CubicSpline curve;
-    // curve
-    //     .addControlPoint(-1.0, -1.0)
-    //     .addControlPoint(-0.5, -0.5)
-    //     .addControlPoint(0.0, 0.0)
-    //     .addControlPoint(0.2, 0.6)
-    //     .addControlPoint(0.7, 0.7)
-    //     .addControlPoint(1.0, 1.0);
-    // CurveDisplay curve_disp = CurveDisplay::createCurveDisplay(curve, -1.0, 1.0, -1.0, 1.0, 5000);
+    const Perlin base_noise{2.0, 2.0, 2.0};
+    const Octave octave_noise{base_noise, 4, 0.3};
+    CubicSpline spline;
+    spline
+        .addControlPoint(-0.85, -1.0)
+        .addControlPoint(-0.5, -0.5)
+        .addControlPoint(0.0, 0.0)
+        .addControlPoint(0.4, 0.6)
+        .addControlPoint(0.85, 1.0);
+    const Curve curved_noise{octave_noise, spline};
+    // CurveDisplay curve_disp = CurveDisplay::createCurveDisplay(spline, -1.0, 1.0, -1.0, 1.0, 5000);
+
+    Terrain terrain = Terrain::createTerrain(curved_noise);
+    Ocean ocean = Ocean::createOcean();
 
     static float angle = 0.0;
     glm::mat4x4 model{1.0};
@@ -103,6 +109,7 @@ void runMainLoop(GLFWwindow *window) {
         glm::mat4x4 model2 = glm::rotate(model, glm::radians(angle), glm::vec3(0.0, 1.0, 0.0));
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         terrain.render(model2, view, projection);
+        ocean.render(model2, view, projection);
         // curve_disp.render();
         glfwSwapBuffers(window);
         glfwPollEvents();

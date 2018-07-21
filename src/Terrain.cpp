@@ -1,5 +1,6 @@
 // -*- mode: c++; c-basic-offset: 4; indent-tabs-mode: nil; -*-
 
+#include <iostream>
 #include <map>
 #include <iostream>
 #include <vector>
@@ -17,30 +18,16 @@
 #include "Resource.h"
 #include "Terrain.h"
 
-Terrain Terrain::createTerrain() {
-    Perlin base_noise;
-    Octave noise{base_noise};
-    CubicSpline curve;
+Terrain Terrain::createTerrain(const NoiseFunction &noise) {
     Terrain rv;
-
-    curve
-        .addControlPoint(-1.0, -1.0)
-        .addControlPoint(-0.5, -0.5)
-        .addControlPoint(0.0, 0.0)
-        .addControlPoint(0.2, 0.6)
-        .addControlPoint(1.0, 1.0);
-
     PositionsAndElements sphere = icosphere(2.0, 5);
     std::vector<PCNVertex> vertices(sphere.positions.size());
-    // std::vector<unsigned int> elems{};
 
     // Adjust the vertex positions with some noise.
     for (unsigned int i = 0; i < sphere.positions.size(); ++i) {
         glm::vec3 &pos = sphere.positions[i];
-        // double perlin_noise = base_noise(pos.x, pos.y, pos.z);
-        double octave_noise = noise(4, 0.4, pos.x, pos.y, pos.z);
-        double curved_noise = curve(octave_noise);
-        pos *= curved_noise/10.0 + 1.0;
+        double n = noise(pos.x, pos.y, pos.z);
+        pos *= n/8.0 + 1.0;
     }
 
     std::map<unsigned int, std::vector<unsigned int> > adj_map;
@@ -94,13 +81,29 @@ Terrain Terrain::createTerrain() {
             }
 
             normal = glm::normalize(normal);
-            // elems.push_back(vertices.size());
+
+            glm::vec3 beach = { 0.8, 0.7, 0.4 };
+            glm::vec3 snow  = { 0.8, 0.8, 0.8 };
+            glm::vec3 rock  = { 0.5, 0.4, 0.3 };
+            glm::vec3 grass = { 0.2, 0.6, 0.2 };
+            glm::vec3 color = { 0.2, 0.2, 0.2 };
+            double center = glm::length(vp);
+
+            if (center < 2.00) {
+                color = beach;
+            } else if (center < 2.08) {
+                color = grass;
+            } else if (center < 2.15) {
+                color = rock;
+            } else {
+                color = snow;
+            }
+
             vertices[ve] = {
                 { vp.x, vp.y, vp.z },
-                { 0.5, 0.5, 0.5, 1.0 },
+                { color.r, color.g, color.b, 1.0 },
                 { normal.x, normal.y, normal.z }
             };
-            // vertices.push_back();
         }
     }
 

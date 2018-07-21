@@ -1,23 +1,25 @@
 // -*- mode: c++; c-basic-offset: 4; indent-tabs-mode: nil; -*-
 
-#ifndef _PLANET_TERRAIN_H_
-#define _PLANET_TERRAIN_H_
+#ifndef _PLANET_OCEAN_H_
+#define _PLANET_OCEAN_H_
 
 #include <glm/mat4x4.hpp>
 
 #include "opengl.h"
 
-#include "Noise.h"
-
-class Terrain {
+class Ocean {
 public:
-    static Terrain createTerrain(const NoiseFunction &noise);
-    ~Terrain();
+    static Ocean createOcean();
+    ~Ocean();
 
-    void render(glm::mat4x4 &model, glm::mat4x4 &view, glm::mat4x4 &projection);
+    void render(const glm::mat4x4 &model, const glm::mat4x4 &view, const glm::mat4x4 &projection) const;
 
 private:
-    Terrain();
+    Ocean();
+
+    void createBuffers();
+    void createProgram();
+    void createArrayObject();
 
     GLuint m_array_buffer, m_elem_buffer;
     GLuint m_program;

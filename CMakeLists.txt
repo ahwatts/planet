@@ -22,6 +22,8 @@ add_subdirectory(vendor/glad)
 embed_resources(SHADERS
   src/shaders/curve.vert
   src/shaders/curve.frag
+  src/shaders/ocean.vert
+  src/shaders/ocean.frag
   src/shaders/terrain.vert
   src/shaders/terrain.frag)
 
@@ -29,6 +31,7 @@ add_executable(planet
   src/Curve.cpp
   src/Models.cpp
   src/Noise.cpp
+  src/Ocean.cpp
   src/OpenGLUtils.cpp
   src/Terrain.cpp
   src/planet.cpp
