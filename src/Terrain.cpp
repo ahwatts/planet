@@ -82,26 +82,9 @@ Terrain Terrain::createTerrain(const NoiseFunction &noise) {
 
             normal = glm::normalize(normal);
 
-            glm::vec3 beach = { 0.8, 0.7, 0.4 };
-            glm::vec3 snow  = { 0.8, 0.8, 0.8 };
-            glm::vec3 rock  = { 0.5, 0.4, 0.3 };
-            glm::vec3 grass = { 0.2, 0.6, 0.2 };
-            glm::vec3 color = { 0.2, 0.2, 0.2 };
-            double center = glm::length(vp);
-
-            if (center < 2.00) {
-                color = beach;
-            } else if (center < 2.08) {
-                color = grass;
-            } else if (center < 2.15) {
-                color = rock;
-            } else {
-                color = snow;
-            }
-
             vertices[ve] = {
                 { vp.x, vp.y, vp.z },
-                { color.r, color.g, color.b, 1.0 },
+                { 0.2, 0.2, 0.2, 1.0 },
                 { normal.x, normal.y, normal.z }
             };
         }
@@ -137,7 +120,6 @@ Terrain Terrain::createTerrain(const NoiseFunction &noise) {
     GLuint frag_shader = createAndCompileShader(GL_FRAGMENT_SHADER, frag_code.toString().data());
     rv.m_program = createProgramFromShaders(vert_shader, frag_shader);
     rv.m_position_loc = glGetAttribLocation(rv.m_program, "position");
-    rv.m_color_loc = glGetAttribLocation(rv.m_program, "color");
     rv.m_normal_loc = glGetAttribLocation(rv.m_program, "normal");
     rv.m_model_loc = glGetUniformLocation(rv.m_program, "model");
     rv.m_view_loc = glGetUniformLocation(rv.m_program, "view");
@@ -158,14 +140,6 @@ Terrain Terrain::createTerrain(const NoiseFunction &noise) {
         3, GL_FLOAT, GL_FALSE,
         sizeof(PCNVertex),
         (const void *)(0)
-    );
-
-    glEnableVertexAttribArray(rv.m_color_loc);
-    glVertexAttribPointer(
-        rv.m_color_loc,
-        4, GL_FLOAT, GL_FALSE,
-        sizeof(PCNVertex),
-        (const void *)(3*sizeof(float))
     );
 
     glEnableVertexAttribArray(rv.m_normal_loc);
@@ -191,7 +165,6 @@ Terrain::Terrain()
       m_array_object{0},
       m_num_elems{0},
       m_position_loc{-1},
-      m_color_loc{-1},
       m_normal_loc{-1},
       m_model_loc{-1},
       m_view_loc{-1},
