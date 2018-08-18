@@ -17,6 +17,7 @@ void bailout(const std::string &msg);
 void handleGlfwError(int code, const char *desc);
 void initGlad();
 void initGlfw(int width, int height, const char *title, GLFWwindow **window);
+void keypress(GLFWwindow *window, int key, int scancode, int action, int mods);
 void runMainLoop(GLFWwindow *window);
 
 const int WINDOW_WIDTH = 1024, WINDOW_HEIGHT = 768;
@@ -76,6 +77,21 @@ void initGlfw(int width, int height, const char *title, GLFWwindow **window) {
     }
 
     glfwMakeContextCurrent(*window);
+    glfwSetKeyCallback(*window, keypress);
+}
+
+void keypress(GLFWwindow *window, int key, int scancode, int action, int mode) {
+    switch (key) {
+    case GLFW_KEY_ESCAPE:
+        glfwSetWindowShouldClose(window, GLFW_TRUE);
+        break;
+    default:
+        std::cout << "key: " << key
+                  << " scancode: " << scancode
+                  << " action: " << action
+                  << " mode: " << mode
+                  << std::endl;
+    }
 }
 
 void runMainLoop(GLFWwindow *window) {
@@ -83,13 +99,15 @@ void runMainLoop(GLFWwindow *window) {
     const Octave octave_noise{base_noise, 4, 0.3};
     CubicSpline spline;
     spline
-        .addControlPoint(-0.85, -1.0)
+        .addControlPoint(-1.0, -1.0)
+        // .addControlPoint(-0.75, -1.0)
         .addControlPoint(-0.5, -0.5)
-        .addControlPoint(0.0, 0.0)
-        .addControlPoint(0.4, 0.6)
-        .addControlPoint(0.85, 1.0);
+        .addControlPoint(0.0, -0.1)
+        .addControlPoint(0.5, 0.8)
+        .addControlPoint(0.75, 1.2)
+        .addControlPoint(1.0, 1.2);
     const Curve curved_noise{octave_noise, spline};
-    // CurveDisplay curve_disp = CurveDisplay::createCurveDisplay(spline, -1.0, 1.0, -1.0, 1.0, 5000);
+    // CurveDisplay curve_disp = CurveDisplay::createCurveDisplay(spline, -1.0, 1.0, -1.0, 1.0, 1000);
 
     Terrain terrain = Terrain::createTerrain(curved_noise);
     Ocean ocean = Ocean::createOcean();

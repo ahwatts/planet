@@ -41,6 +41,6 @@ target_include_directories(planet PUBLIC vendor/embed-resource)
 target_link_libraries(planet PUBLIC glad glfw glm)
 
 if(CMAKE_COMPILER_IS_GNUCXX)
-    target_compile_options(planet PUBLIC "-Wall" "-pg" "-ggdb")
+    target_compile_options(planet PUBLIC "-Wall" "-Og" "-pg" "-ggdb")
     set_target_properties(planet PROPERTIES LINK_FLAGS "-pg")
 endif()

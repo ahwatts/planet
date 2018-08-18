@@ -18,5 +18,6 @@ void main(void) {
     } else {
         color = vec3(0.8, 0.8, 0.8);
     }
+
     FragColor = vec4(color.rgb * v_normal.z, 1.0);
 }

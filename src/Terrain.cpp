@@ -30,6 +30,8 @@ Terrain Terrain::createTerrain(const NoiseFunction &noise) {
         pos *= n/8.0 + 1.0;
     }
 
+    // Build an adjacency map of vertices to triangles (as base
+    // element indices).
     std::map<unsigned int, std::vector<unsigned int> > adj_map;
     for (unsigned int i = 0; i < sphere.elements.size(); i += 3) {
         adj_map[sphere.elements[i+0]].push_back(i);
@@ -37,57 +39,53 @@ Terrain Terrain::createTerrain(const NoiseFunction &noise) {
         adj_map[sphere.elements[i+2]].push_back(i);
     }
 
-    // For each face A in the mesh...
-    for (unsigned int i = 0; i < sphere.elements.size(); i += 3) {
-        unsigned int ae1 = sphere.elements[i+0];
-        unsigned int ae2 = sphere.elements[i+1];
-        unsigned int ae3 = sphere.elements[i+2];
-        const glm::vec3 &ap1 = sphere.positions[ae1];
-        const glm::vec3 &ap2 = sphere.positions[ae2];
-        const glm::vec3 &ap3 = sphere.positions[ae3];
+    // Compute the PCNVertex for the vertex at this position.
+    for (unsigned int vid = 0; vid < sphere.positions.size(); ++vid) {
+        glm::vec3 &vp = sphere.positions[vid];
 
-        // For each vertex in this face.
-        for (auto ve : { ae1, ae2, ae3 }) {
-            glm::vec3 vp = sphere.positions[ve];
+        // Compute the vertex normal as a weighted average of the
+        // facet normals for the triangles adjacent to this vertex.
+        glm::vec3 vertex_normal{0.0f, 0.0f, 0.0f};
 
-            glm::vec3 normal = { 0.0, 0.0, 0.0 };
-            
-            std::vector<unsigned int> &adjacent = adj_map[ve];
-            for (auto j : adjacent) {
-                unsigned int be1 = sphere.elements[j+0];
-                unsigned int be2 = sphere.elements[j+1];
-                unsigned int be3 = sphere.elements[j+2];
-                const glm::vec3 &bp1 = sphere.positions[be1];
-                const glm::vec3 &bp2 = sphere.positions[be2];
-                const glm::vec3 &bp3 = sphere.positions[be3];
-                glm::vec3 b_cross = glm::cross(bp2 - bp1, bp3 - bp1);
-                float b_area = 0.5f*glm::length(b_cross);
-                glm::vec3 b_norm = glm::normalize(b_cross);
+        for (auto tid : adj_map[vid]) {
+            unsigned int vid1 = sphere.elements[tid+0];
+            unsigned int vid2 = sphere.elements[tid+1];
+            unsigned int vid3 = sphere.elements[tid+2];
+            const glm::vec3 &v1 = sphere.positions[vid1];
+            const glm::vec3 &v2 = sphere.positions[vid2];
+            const glm::vec3 &v3 = sphere.positions[vid3];
+            glm::vec3 cross = glm::cross(v2 - v1, v3 - v1);
+            glm::vec3 face_normal = glm::normalize(cross);
 
-                glm::vec3 s1, s2;
-                if (ve == ae1) {
-                    s1 = ap1 - ap2;
-                    s2 = ap1 - ap3;
-                } else if (ve == ae2) {
-                    s1 = ap2 - ap1;
-                    s2 = ap2 - ap3;
-                } else if (ve == ae3) {
-                    s1 = ap3 - ap1;
-                    s2 = ap3 - ap2;
-                }
+            // Weight by the area (the mangitude of the cross product
+            // is twice the area of the triangle). The extra factor of
+            // 2 is unimportant, since we're normalizing the result.
+            float area = glm::length(cross);
 
-                float angle = std::acos(glm::dot(s1, s2) / glm::length(s1) / glm::length(s2));
-                normal += b_norm * b_area * angle;
+            // Also weight by the angle of the triangle at this
+            // vertex.
+            glm::vec3 s1, s2;
+            if (vid == vid1) {
+                s1 = v1 - v2;
+                s2 = v1 - v3;
+            } else if (vid == vid2) {
+                s1 = v2 - v1;
+                s2 = v2 - v3;
+            } else if (vid == vid3) {
+                s1 = v3 - v1;
+                s2 = v3 - v2;
             }
+            float angle = std::acos(glm::dot(s1, s2) / glm::length(s1) / glm::length(s2));
 
-            normal = glm::normalize(normal);
-
-            vertices[ve] = {
-                { vp.x, vp.y, vp.z },
-                { 0.2, 0.2, 0.2, 1.0 },
-                { normal.x, normal.y, normal.z }
-            };
+            vertex_normal += face_normal * area * angle;
         }
+
+        vertex_normal = glm::normalize(vertex_normal);
+        vertices[vid] = {
+            { vp.x, vp.y, vp.z },
+            { 0.2, 0.2, 0.2, 1.0 },
+            { vertex_normal.x, vertex_normal.y, vertex_normal.z }
+        };
     }
 
     rv.m_num_elems = static_cast<unsigned int>(sphere.elements.size());
