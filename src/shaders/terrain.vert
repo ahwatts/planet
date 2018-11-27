@@ -1,11 +1,14 @@
 #version 430 core
 
-in vec3 position;
-in vec3 normal;
+layout(location = 0) in vec3 position;
+layout(location = 1) in vec3 normal;
+
+layout(shared) uniform ViewAndProjectionBlock {
+    mat4x4 view;
+    mat4x4 projection;
+};
 
 uniform mat4x4 model;
-uniform mat4x4 view;
-uniform mat4x4 projection;
 
 out vec3 v_position;
 out vec4 v_normal;

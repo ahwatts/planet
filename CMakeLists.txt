@@ -33,6 +33,7 @@ add_executable(planet
   src/Noise.cpp
   src/Ocean.cpp
   src/OpenGLUtils.cpp
+  src/SharedBlocks.cpp
   src/Terrain.cpp
   src/planet.cpp
   ${SHADERS})

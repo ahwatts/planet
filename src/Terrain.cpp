@@ -16,6 +16,7 @@
 #include "Noise.h"
 #include "OpenGLUtils.h"
 #include "Resource.h"
+#include "SharedBlocks.h"
 #include "Terrain.h"
 
 Terrain Terrain::createTerrain(const NoiseFunction &noise) {
@@ -117,11 +118,15 @@ Terrain Terrain::createTerrain(const NoiseFunction &noise) {
     GLuint vert_shader = createAndCompileShader(GL_VERTEX_SHADER, vert_code.toString().data());
     GLuint frag_shader = createAndCompileShader(GL_FRAGMENT_SHADER, frag_code.toString().data());
     rv.m_program = createProgramFromShaders(vert_shader, frag_shader);
-    rv.m_position_loc = glGetAttribLocation(rv.m_program, "position");
-    rv.m_normal_loc = glGetAttribLocation(rv.m_program, "normal");
+    rv.m_position_loc = 0;
+    rv.m_normal_loc = 1;
     rv.m_model_loc = glGetUniformLocation(rv.m_program, "model");
-    rv.m_view_loc = glGetUniformLocation(rv.m_program, "view");
-    rv.m_projection_loc = glGetUniformLocation(rv.m_program, "projection");
+    // rv.m_view_loc = glGetUniformLocation(rv.m_program, "view");
+    // rv.m_projection_loc = glGetUniformLocation(rv.m_program, "projection");
+
+    dumpProgramAttributes(rv.m_program, "");
+    dumpProgramUniforms(rv.m_program, "");
+    ViewAndProjectionBlock::setOffsets(rv.m_program, "ViewAndProjectionBlock");
 
     glDeleteShader(vert_shader);
     glDeleteShader(frag_shader);

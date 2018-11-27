@@ -23,6 +23,8 @@ void getUniformBlockInfo(GLuint program, IndexMap &uniform_blocks);
 int sizeOfGLType(GLenum type);
 std::string translateGLType(GLenum type);
 void dumpOpenGLState();
+void dumpProgramAttributes(GLuint progid, const char *prefix);
+void dumpProgramUniforms(GLuint progid, const char *prefix);
 
 void printOpenGLError();
 
