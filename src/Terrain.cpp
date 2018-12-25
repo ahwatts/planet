@@ -103,7 +103,7 @@ Terrain Terrain::createTerrain(const NoiseFunction &noise) {
         vertices.data(),
         GL_STATIC_DRAW);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
-    
+
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, rv.m_elem_buffer);
     glBufferData(
         GL_ELEMENT_ARRAY_BUFFER,
@@ -118,15 +118,14 @@ Terrain Terrain::createTerrain(const NoiseFunction &noise) {
     GLuint vert_shader = createAndCompileShader(GL_VERTEX_SHADER, vert_code.toString().data());
     GLuint frag_shader = createAndCompileShader(GL_FRAGMENT_SHADER, frag_code.toString().data());
     rv.m_program = createProgramFromShaders(vert_shader, frag_shader);
+    ViewAndProjectionBlock::setOffsets(rv.m_program, "ViewAndProjectionBlock");
     rv.m_position_loc = 0;
     rv.m_normal_loc = 1;
     rv.m_model_loc = glGetUniformLocation(rv.m_program, "model");
-    // rv.m_view_loc = glGetUniformLocation(rv.m_program, "view");
-    // rv.m_projection_loc = glGetUniformLocation(rv.m_program, "projection");
+    rv.m_vp_block_loc = 0;
 
-    dumpProgramAttributes(rv.m_program, "");
-    dumpProgramUniforms(rv.m_program, "");
-    ViewAndProjectionBlock::setOffsets(rv.m_program, "ViewAndProjectionBlock");
+    GLuint vp_block_idx = glGetUniformBlockIndex(rv.m_program, "ViewAndProjectionBlock");
+    glUniformBlockBinding(rv.m_program, vp_block_idx, rv.m_vp_block_loc);
 
     glDeleteShader(vert_shader);
     glDeleteShader(frag_shader);
@@ -170,13 +169,12 @@ Terrain::Terrain()
       m_position_loc{-1},
       m_normal_loc{-1},
       m_model_loc{-1},
-      m_view_loc{-1},
-      m_projection_loc{-1}
+      m_vp_block_loc{std::numeric_limits<GLuint>::max()}
 {}
 
 Terrain::~Terrain() {
     std::vector<GLuint> bufs{};
-    
+
     if (glIsBuffer(m_array_buffer)) {
         bufs.push_back(m_array_buffer);
     }
@@ -205,14 +203,20 @@ Terrain::~Terrain() {
     m_array_object = 0;
 }
 
-void Terrain::render(glm::mat4x4 &model, glm::mat4x4 &view, glm::mat4x4 &projection) {
+void Terrain::render(glm::mat4x4 &model, const ViewAndProjectionBlock &vp_block) {
     glUseProgram(m_program);
 
     glEnable(GL_DEPTH_TEST);
+    vp_block.bindToIndex(m_vp_block_loc);
     glUniformMatrix4fv(m_model_loc, 1, GL_FALSE, glm::value_ptr(model));
-    glUniformMatrix4fv(m_view_loc, 1, GL_FALSE, glm::value_ptr(view));
-    glUniformMatrix4fv(m_projection_loc, 1, GL_FALSE, glm::value_ptr(projection));
     glBindVertexArray(m_array_object);
+
+    // static int i = 0;
+    // if (i % 500 == 0) {
+    //     dumpOpenGLState();
+    // }
+    // ++i;
+
     glDrawElements(GL_TRIANGLES, m_num_elems, GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);
     glUseProgram(0);

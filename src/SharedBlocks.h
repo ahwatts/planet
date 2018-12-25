@@ -20,11 +20,17 @@ public:
     void setProjection(const glm::mat4x4 &new_proj);
     const glm::mat4x4& projection() const;
 
-    void writeToBuffer(GLuint buffer);
+    void writeToBuffer();
+    void bindToIndex(GLuint index) const;
+    void unbindIndex(GLuint index) const;
 
 private:
+    void createBuffer();
+    void destroyBuffer();
+
+    GLuint m_buffer;
     glm::mat4x4 m_view, m_projection;
-    static GLuint VIEW_OFFSET, PROJECTION_OFFSET;
+    static GLuint SIZE, VIEW_OFFSET, PROJECTION_OFFSET;
 };
 
 #endif

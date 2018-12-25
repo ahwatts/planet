@@ -11,6 +11,8 @@
 
 #include "Curve.h"
 #include "Ocean.h"
+#include "OpenGLUtils.h"
+#include "SharedBlocks.h"
 #include "Terrain.h"
 
 void bailout(const std::string &msg);
@@ -107,11 +109,12 @@ void runMainLoop(GLFWwindow *window) {
         .addControlPoint(0.75, 1.2)
         .addControlPoint(1.0, 1.2);
     const Curve curved_noise{octave_noise, spline};
-    // CurveDisplay curve_disp = CurveDisplay::createCurveDisplay(spline, -1.0, 1.0, -1.0, 1.0, 1000);
 
+    // CurveDisplay curve_disp = CurveDisplay::createCurveDisplay(spline, -1.0, 1.0, -1.0, 1.0, 1000);
     Terrain terrain = Terrain::createTerrain(curved_noise);
     Ocean ocean = Ocean::createOcean();
 
+    ViewAndProjectionBlock vp_block{};
     static float angle = 0.0;
     glm::mat4x4 model{1.0};
     glm::mat4x4 view = glm::lookAt(
@@ -122,11 +125,14 @@ void runMainLoop(GLFWwindow *window) {
     glm::mat4x4 projection = glm::perspectiveFov(
         20.0f, (float)WINDOW_WIDTH, (float)WINDOW_HEIGHT, 0.1f, 100.0f
     );
+    vp_block.setProjection(projection);
+    vp_block.setView(view);
+    vp_block.writeToBuffer();
 
     while (!glfwWindowShouldClose(window)) {
         glm::mat4x4 model2 = glm::rotate(model, glm::radians(angle), glm::vec3(0.0, 1.0, 0.0));
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        terrain.render(model2, view, projection);
+        terrain.render(model2, vp_block);
         ocean.render(model2, view, projection);
         // curve_disp.render();
         glfwSwapBuffers(window);

@@ -8,13 +8,14 @@
 #include "opengl.h"
 
 #include "Noise.h"
+#include "SharedBlocks.h"
 
 class Terrain {
 public:
     static Terrain createTerrain(const NoiseFunction &noise);
     ~Terrain();
 
-    void render(glm::mat4x4 &model, glm::mat4x4 &view, glm::mat4x4 &projection);
+    void render(glm::mat4x4 &model, const ViewAndProjectionBlock &vp_block);
 
 private:
     Terrain();
@@ -25,7 +26,8 @@ private:
     GLuint m_num_elems;
 
     GLint m_position_loc, m_normal_loc;
-    GLint m_model_loc, m_view_loc, m_projection_loc;
+    GLint m_model_loc;
+    GLuint m_vp_block_loc;
 };
 
 #endif
