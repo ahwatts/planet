@@ -697,6 +697,81 @@ void dumpProgramUniforms(GLuint progid, const char *prefix) {
     delete [] row_majors;
 }
 
+void dumpProgramUniformBlocks(GLuint progid) {
+        GLint num_things;
+    GLint max_name_len;
+    glGetProgramiv(progid, GL_ACTIVE_UNIFORM_BLOCKS, &num_things);
+    glGetProgramiv(progid, GL_ACTIVE_UNIFORM_BLOCK_MAX_NAME_LENGTH, &max_name_len);
+    char *name = new char[max_name_len];
+    std::cout << "    Uniform blocks: " << num_things << std::endl;
+    for (auto i = 0; i < num_things; ++i) {
+        GLint binding = -1, bound_buffer = -1, num_uniforms = 0, data_size = 0;
+        GLuint index = 0;
+        glGetActiveUniformBlockiv(progid, i, GL_UNIFORM_BLOCK_BINDING, &binding);
+        glGetActiveUniformBlockiv(progid, i, GL_UNIFORM_BLOCK_ACTIVE_UNIFORMS, &num_uniforms);
+        glGetActiveUniformBlockiv(progid, i, GL_UNIFORM_BLOCK_DATA_SIZE, &data_size);
+        glGetActiveUniformBlockName(progid, i, max_name_len, nullptr, name);
+        glGetIntegeri_v(GL_UNIFORM_BUFFER_BINDING, binding, &bound_buffer);
+        index = glGetUniformBlockIndex(progid, name);
+        std::cout << "      " << i << ":"
+                  << " " << name << ":"
+                  << " index: " << index
+                  << " binding: " << binding
+                  << " num_uniforms: " << num_uniforms
+                  << " data_size: " << data_size
+                  << std::endl;
+
+        GLint *int_uniform_indices = new GLint[num_uniforms];
+        GLuint *uniform_indices = new GLuint[num_uniforms];
+        GLint *sizes = new GLint[num_uniforms];
+        GLint *itypes = new GLint[num_uniforms];
+        GLint *offsets = new GLint[num_uniforms];
+        GLint *array_strides = new GLint[num_uniforms];
+        GLint *matrix_strides = new GLint[num_uniforms];
+        GLint *row_majors = new GLint[num_uniforms];
+        GLint max_name_len_2 = -1;
+
+        glGetActiveUniformBlockiv(progid, i, GL_UNIFORM_BLOCK_ACTIVE_UNIFORM_INDICES, int_uniform_indices);
+        for (auto j = 0; j < num_uniforms; ++j) { uniform_indices[j] = (GLuint)int_uniform_indices[j]; }
+    
+        glGetActiveUniformsiv(progid, num_uniforms, uniform_indices, GL_UNIFORM_TYPE, itypes);
+        glGetActiveUniformsiv(progid, num_uniforms, uniform_indices, GL_UNIFORM_SIZE, sizes);
+        glGetActiveUniformsiv(progid, num_uniforms, uniform_indices, GL_UNIFORM_OFFSET, offsets);
+        glGetActiveUniformsiv(progid, num_uniforms, uniform_indices, GL_UNIFORM_ARRAY_STRIDE, array_strides);
+        glGetActiveUniformsiv(progid, num_uniforms, uniform_indices, GL_UNIFORM_MATRIX_STRIDE, matrix_strides);
+        glGetActiveUniformsiv(progid, num_uniforms, uniform_indices, GL_UNIFORM_IS_ROW_MAJOR, row_majors);
+
+        glGetProgramiv(progid, GL_ACTIVE_UNIFORM_MAX_LENGTH, &max_name_len_2);
+        char *name_2 = new char[max_name_len_2];
+
+        for (auto j = 0; j < num_uniforms; ++j) {
+            glGetActiveUniformName(progid, uniform_indices[j], max_name_len_2, nullptr, name_2);
+
+            std::cout << "        " << j << ":"
+                      << " " << name_2 << ":"
+                      << " index: " << uniform_indices[j]
+                      << " type: " << translateGLType(itypes[j])
+                      << " size: " << sizes[j]
+                      << " offset: " << offsets[j]
+                      << " array stride: " << array_strides[j]
+                      << " matrix stride: " << matrix_strides[j]
+                      << " is row major: " << row_majors[j]
+                      << std::endl;
+        }
+
+        delete [] int_uniform_indices;
+        delete [] uniform_indices;
+        delete [] sizes;
+        delete [] itypes;
+        delete [] offsets;
+        delete [] array_strides;
+        delete [] matrix_strides;
+        delete [] row_majors;
+        delete [] name_2;
+    }
+    delete [] name;
+}
+
 void dumpOpenGLState() {
     GLint progid = -1, element_array_buffer = -1, vertex_array = -1;
 
@@ -718,77 +793,8 @@ void dumpOpenGLState() {
     dumpProgramUniforms(progid, "    ");
     std::cout << std::endl;
 
-    // glGetProgramiv(progid, GL_ACTIVE_UNIFORM_BLOCKS, &num_things);
-    // glGetProgramiv(progid, GL_ACTIVE_UNIFORM_BLOCK_MAX_NAME_LENGTH, &max_name_len);
-    // name = new char[max_name_len];
-    // std::cout << "    Uniform blocks: " << num_things << std::endl;
-    // for (auto i = 0; i < num_things; ++i) {
-    //     GLint binding = -1, bound_buffer = -1, num_uniforms = 0, data_size = 0;
-    //     GLuint index = 0;
-    //     glGetActiveUniformBlockiv(progid, i, GL_UNIFORM_BLOCK_BINDING, &binding);
-    //     glGetActiveUniformBlockiv(progid, i, GL_UNIFORM_BLOCK_ACTIVE_UNIFORMS, &num_uniforms);
-    //     glGetActiveUniformBlockiv(progid, i, GL_UNIFORM_BLOCK_DATA_SIZE, &data_size);
-    //     glGetActiveUniformBlockName(progid, i, max_name_len, nullptr, name);
-    //     glGetIntegeri_v(GL_UNIFORM_BUFFER_BINDING, binding, &bound_buffer);
-    //     index = glGetUniformBlockIndex(progid, name);
-    //     std::cout << "      " << i << ":"
-    //               << " " << name << ":"
-    //               << " index: " << index
-    //               << " binding: " << binding
-    //               << " num_uniforms: " << num_uniforms
-    //               << " data_size: " << data_size
-    //               << std::endl;
-
-    //     GLint *int_uniform_indices = new GLint[num_uniforms];
-    //     GLuint *uniform_indices = new GLuint[num_uniforms];
-    //     GLint *sizes = new GLint[num_uniforms];
-    //     GLint *itypes = new GLint[num_uniforms];
-    //     GLint *offsets = new GLint[num_uniforms];
-    //     GLint *array_strides = new GLint[num_uniforms];
-    //     GLint *matrix_strides = new GLint[num_uniforms];
-    //     GLint *row_majors = new GLint[num_uniforms];
-    //     GLint max_name_len_2 = -1;
-
-    //     glGetActiveUniformBlockiv(progid, i, GL_UNIFORM_BLOCK_ACTIVE_UNIFORM_INDICES, int_uniform_indices);
-    //     for (auto j = 0; j < num_uniforms; ++j) { uniform_indices[j] = (GLuint)int_uniform_indices[j]; }
-    
-    //     glGetActiveUniformsiv(progid, num_uniforms, uniform_indices, GL_UNIFORM_TYPE, itypes);
-    //     glGetActiveUniformsiv(progid, num_uniforms, uniform_indices, GL_UNIFORM_SIZE, sizes);
-    //     glGetActiveUniformsiv(progid, num_uniforms, uniform_indices, GL_UNIFORM_OFFSET, offsets);
-    //     glGetActiveUniformsiv(progid, num_uniforms, uniform_indices, GL_UNIFORM_ARRAY_STRIDE, array_strides);
-    //     glGetActiveUniformsiv(progid, num_uniforms, uniform_indices, GL_UNIFORM_MATRIX_STRIDE, matrix_strides);
-    //     glGetActiveUniformsiv(progid, num_uniforms, uniform_indices, GL_UNIFORM_IS_ROW_MAJOR, row_majors);
-
-    //     glGetProgramiv(progid, GL_ACTIVE_UNIFORM_MAX_LENGTH, &max_name_len_2);
-    //     char *name_2 = new char[max_name_len_2];
-
-    //     for (auto j = 0; j < num_uniforms; ++j) {
-    //         glGetActiveUniformName(progid, uniform_indices[j], max_name_len_2, nullptr, name_2);
-
-    //         std::cout << "        " << j << ":"
-    //                   << " " << name_2 << ":"
-    //                   << " type: " << translateGLType(itypes[j])
-    //                   << " size: " << sizes[j]
-    //                   << " offset: " << offsets[j]
-    //                   << " array stride: " << array_strides[j]
-    //                   << " matrix stride: " << matrix_strides[j]
-    //                   << " is row major: " << row_majors[j]
-    //                   << std::endl;
-    //     }
-
-    //     delete [] int_uniform_indices;
-    //     delete [] uniform_indices;
-    //     delete [] sizes;
-    //     delete [] itypes;
-    //     delete [] offsets;
-    //     delete [] array_strides;
-    //     delete [] matrix_strides;
-    //     delete [] row_majors;
-    //     delete [] name_2;
-    // }
-    // delete [] name;
-
-    // std::cout << std::endl;
+    dumpProgramUniformBlocks(progid);
+    std::cout << std::endl;
 }
 
 void printOpenGLError() {

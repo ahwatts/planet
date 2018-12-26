@@ -2,8 +2,11 @@
 
 #include <cstring>
 #include <limits>
+
 #include "opengl.h"
 #include "glm/mat4x4.hpp"
+#include "glm/gtc/type_ptr.hpp"
+
 #include "SharedBlocks.h"
 
 const GLuint MAX_GLUINT = std::numeric_limits<GLuint>::max();
@@ -54,14 +57,24 @@ void ViewAndProjectionBlock::setOffsets(GLuint program, const char *block_name) 
     GLint *unif_offs = new GLint[num_unifs];
     glGetActiveUniformsiv(program, num_unifs, unif_indices, GL_UNIFORM_OFFSET, unif_offs);
 
-    // Assume view comes first and projection second.
-    VIEW_OFFSET = unif_offs[1];
-    PROJECTION_OFFSET = unif_offs[0];
+    GLint name_len;
+    glGetProgramiv(program, GL_ACTIVE_UNIFORM_MAX_LENGTH, &name_len);
+    char *name = new char[name_len];
+
+    for (int i = 0; i < num_unifs; ++i) {
+        glGetActiveUniformName(program, unif_indices[i], name_len, nullptr, name);
+        if (std::strncmp("view", name, name_len) == 0) {
+            VIEW_OFFSET = unif_offs[i];
+        } else if (std::strncmp("projection", name, name_len) == 0) {
+            PROJECTION_OFFSET = unif_offs[i];
+        }
+    }
 
     // Cleanup.
     delete[] unif_indices_int;
     delete[] unif_indices;
     delete[] unif_offs;
+    delete[] name;
 }
 
 void ViewAndProjectionBlock::setView(const glm::mat4x4 &new_view) {
@@ -87,8 +100,8 @@ void ViewAndProjectionBlock::writeToBuffer() {
 
     glBindBuffer(GL_UNIFORM_BUFFER, m_buffer);
     uint8_t *data = static_cast<uint8_t*>(glMapBuffer(GL_UNIFORM_BUFFER, GL_WRITE_ONLY));
-    std::memcpy(data + VIEW_OFFSET, &m_view, sizeof(m_view));
-    std::memcpy(data + PROJECTION_OFFSET, &m_projection, sizeof(m_projection));
+    std::memcpy(data + VIEW_OFFSET, glm::value_ptr(m_view), sizeof(m_view));
+    std::memcpy(data + PROJECTION_OFFSET, glm::value_ptr(m_projection), sizeof(m_projection));
     glUnmapBuffer(GL_UNIFORM_BUFFER);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }
