@@ -15,7 +15,7 @@ public:
     static Terrain createTerrain(const NoiseFunction &noise);
     ~Terrain();
 
-    void render(glm::mat4x4 &model, const ViewAndProjectionBlock &vp_block);
+    void render(glm::mat4x4 &model);
 
 private:
     Terrain();
@@ -27,7 +27,6 @@ private:
 
     GLint m_position_loc, m_normal_loc;
     GLint m_model_loc;
-    GLuint m_vp_block_loc;
 };
 
 #endif

@@ -1,10 +1,12 @@
 #version 430 core
 
-in vec4 v_color;
-in vec4 v_normal;
+layout(location = 0) in vec4 inColor;
+layout(location = 1) in vec4 inNormal;
 
-out vec4 FragColor;
+uniform uint specular_exp;
+
+layout(location = 0) out vec4 outColor;
 
 void main(void) {
-    FragColor = vec4(v_color.rgb * v_normal.z, 1.0);
+    outColor = vec4(inColor.rgb * inNormal.z, 1.0);
 }

@@ -12,7 +12,7 @@ public:
     static Ocean createOcean();
     ~Ocean();
 
-    void render(const glm::mat4x4 &model, const glm::mat4x4 &view, const glm::mat4x4 &projection) const;
+    void render(const glm::mat4x4 &model) const;
 
 private:
     Ocean();
@@ -27,7 +27,7 @@ private:
     GLuint m_num_elems;
 
     GLint m_position_loc, m_color_loc, m_normal_loc;
-    GLint m_model_loc, m_view_loc, m_projection_loc;
+    GLint m_model_loc;
 };
 
 #endif

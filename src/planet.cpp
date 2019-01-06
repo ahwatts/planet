@@ -110,7 +110,7 @@ void runMainLoop(GLFWwindow *window) {
         .addControlPoint(1.0, 1.2);
     const Curve curved_noise{octave_noise, spline};
 
-    // CurveDisplay curve_disp = CurveDisplay::createCurveDisplay(spline, -1.0, 1.0, -1.0, 1.0, 1000);
+    CurveDisplay curve_disp = CurveDisplay::createCurveDisplay(spline, -1.0, 1.0, -1.0, 1.0, 1000);
     Terrain terrain = Terrain::createTerrain(curved_noise);
     Ocean ocean = Ocean::createOcean();
 
@@ -129,14 +129,28 @@ void runMainLoop(GLFWwindow *window) {
     vp_block.setView(view);
     vp_block.writeToBuffer();
 
+    LightListBlock light_block{};
+    light_block.enableLight(0, glm::vec3(1.0, 1.0, 1.0));
+    light_block.writeToBuffer();
+
     while (!glfwWindowShouldClose(window)) {
         glm::mat4x4 model2 = glm::rotate(model, glm::radians(angle), glm::vec3(0.0, 1.0, 0.0));
+
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        terrain.render(model2, vp_block);
-        ocean.render(model2, view, projection);
-        // curve_disp.render();
+
+        vp_block.bind();
+        light_block.bind();
+        terrain.render(model2);
+        ocean.render(model2);
+        vp_block.unbind();
+        light_block.unbind();
+
+        curve_disp.render();
+
         glfwSwapBuffers(window);
+
         glfwPollEvents();
+
         angle += 0.5;
         if (angle > 360.0) {
             angle = 0.0;

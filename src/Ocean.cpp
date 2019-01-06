@@ -11,6 +11,7 @@
 #include "OpenGLUtils.h"
 #include "Ocean.h"
 #include "Resource.h"
+#include "SharedBlocks.h"
 
 Ocean Ocean::createOcean() {
     Ocean rv;
@@ -29,9 +30,7 @@ Ocean::Ocean()
       m_position_loc{-1},
       m_color_loc{-1},
       m_normal_loc{-1},
-      m_model_loc{-1},
-      m_view_loc{-1},
-      m_projection_loc{-1}
+      m_model_loc{-1}
 {}
 
 Ocean::~Ocean() {
@@ -65,14 +64,19 @@ Ocean::~Ocean() {
     m_array_object = 0;
 }
 
-void Ocean::render(const glm::mat4x4 &model, const glm::mat4x4 &view, const glm::mat4x4 &projection) const {
+void Ocean::render(const glm::mat4x4 &model) const {
     glUseProgram(m_program);
 
     glEnable(GL_DEPTH_TEST);
     glUniformMatrix4fv(m_model_loc, 1, GL_FALSE, glm::value_ptr(model));
-    glUniformMatrix4fv(m_view_loc, 1, GL_FALSE, glm::value_ptr(view));
-    glUniformMatrix4fv(m_projection_loc, 1, GL_FALSE, glm::value_ptr(projection));
     glBindVertexArray(m_array_object);
+
+    // static int i = 0;
+    // if (i % 500 == 0) {
+    //     dumpOpenGLState();
+    // }
+    // ++i;
+
     glDrawElements(GL_TRIANGLES, m_num_elems, GL_UNSIGNED_INT, 0);
 
     glBindVertexArray(0);
@@ -82,7 +86,7 @@ void Ocean::render(const glm::mat4x4 &model, const glm::mat4x4 &view, const glm:
 
 void Ocean::createBuffers() {
     PositionsAndElements sphere = icosphere(1.97, 5);
-    std::vector<PCNVertex> vertices(sphere.positions.size());    
+    std::vector<PCNVertex> vertices(sphere.positions.size());
 
     for (unsigned int i = 0; i < sphere.positions.size(); ++i) {
         glm::vec3 &pos = sphere.positions[i];
@@ -93,7 +97,7 @@ void Ocean::createBuffers() {
             { norm.x, norm.y, norm.z }
         };
     }
-    
+
     GLuint bufs[2];
     glGenBuffers(2, bufs);
     m_array_buffer = bufs[0];
@@ -106,7 +110,7 @@ void Ocean::createBuffers() {
         vertices.data(),
         GL_STATIC_DRAW);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
-    
+
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_elem_buffer);
     glBufferData(
         GL_ELEMENT_ARRAY_BUFFER,
@@ -125,12 +129,17 @@ void Ocean::createProgram() {
     GLuint vert_shader = createAndCompileShader(GL_VERTEX_SHADER, vert_code.toString().data());
     GLuint frag_shader = createAndCompileShader(GL_FRAGMENT_SHADER, frag_code.toString().data());
     m_program = createProgramFromShaders(vert_shader, frag_shader);
-    m_position_loc = glGetAttribLocation(m_program, "position");
-    m_color_loc = glGetAttribLocation(m_program, "color");
-    m_normal_loc = glGetAttribLocation(m_program, "normal");
+    LightListBlock::setOffsets(m_program, "LightListBlock");
+    m_position_loc = 0;
+    m_color_loc = 1;
+    m_normal_loc = 2;
     m_model_loc = glGetUniformLocation(m_program, "model");
-    m_view_loc = glGetUniformLocation(m_program, "view");
-    m_projection_loc = glGetUniformLocation(m_program, "projection");
+
+    GLuint vp_block_idx = glGetUniformBlockIndex(m_program, "ViewAndProjectionBlock");
+    glUniformBlockBinding(m_program, vp_block_idx, ViewAndProjectionBlock::BINDING_INDEX);
+
+    GLuint light_block_idx = glGetUniformBlockIndex(m_program, "LightListBlock");
+    glUniformBlockBinding(m_program, light_block_idx, LightListBlock::BINDING_INDEX);
 
     glDeleteShader(vert_shader);
     glDeleteShader(frag_shader);

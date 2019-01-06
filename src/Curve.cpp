@@ -199,7 +199,7 @@ void CurveDisplay::createBuffers(const std::vector<glm::vec2> &vertices, const s
         vertices.data(),
         GL_STATIC_DRAW);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
-    
+
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_elem_buffer);
     glBufferData(
         GL_ELEMENT_ARRAY_BUFFER,
@@ -218,7 +218,7 @@ void CurveDisplay::createProgram() {
     GLuint vert_shader = createAndCompileShader(GL_VERTEX_SHADER, vert_code.toString().data());
     GLuint frag_shader = createAndCompileShader(GL_FRAGMENT_SHADER, frag_code.toString().data());
     m_program = createProgramFromShaders(vert_shader, frag_shader);
-    m_position_loc = glGetAttribLocation(m_program, "position");
+    m_position_loc = 0;
 
     glDeleteShader(vert_shader);
     glDeleteShader(frag_shader);

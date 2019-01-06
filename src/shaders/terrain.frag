@@ -1,23 +1,57 @@
 #version 430 core
 
-in vec3 v_position;
-in vec4 v_normal;
+const int MAX_LIGHTS = 10;
+struct LightInfo {
+    bool enabled;
+    vec3 position;
+    // vec4 color;
+    // uint specular_exp;
+};
 
-out vec4 FragColor;
+layout(location = 0) in float inHeight;
+layout(location = 1) in vec3 inNormal;
+layout(location = 2) in vec3 inLightDir[MAX_LIGHTS];
+
+layout(shared) uniform LightListBlock {
+    LightInfo lights[MAX_LIGHTS];
+};
+
+layout(location = 0) out vec4 outColor;
 
 void main(void) {
-    float radius = length(v_position);
+    // Specify a color based on the "altitude" of the vertex.
     vec3 color = vec3(0.0, 0.0, 0.0);
-
-    if (radius < 2.00) {
+    if (inHeight < 2.00) {
         color = vec3(0.8, 0.7, 0.4);
-    } else if (radius < 2.08) {
+    } else if (inHeight < 2.08) {
         color = vec3(0.2, 0.6, 0.2);
-    } else if (radius < 2.15) {
+    } else if (inHeight < 2.15) {
         color = vec3(0.5, 0.4, 0.3);
     } else {
         color = vec3(0.8, 0.8, 0.8);
     }
 
-    FragColor = vec4(color.rgb * v_normal.z, 1.0);
+    // No specular highlight for the terrain. Just an ambient and a diffuse
+    // term. The diffuse coefficient really should use the direction of the light source
+    // instead of the eye direction; we're basically specifying that the light
+    // is coming from the eye direction, then.
+    int enabled_lights = 0;
+
+    vec3 diffuse_colors[MAX_LIGHTS];
+    for (int i = 0; i < MAX_LIGHTS; ++i) {
+        if (lights[i].enabled) {
+            enabled_lights += 1;
+            diffuse_colors[i] = color * dot(inNormal, inLightDir[i]);
+        }
+    }
+
+    vec3 ambient_color = color;
+
+    vec3 diffuse_color = vec3(0.0, 0.0, 0.0);
+    for (int i = 0; i < MAX_LIGHTS; ++i) {
+        diffuse_color += (1.0 / enabled_lights) * diffuse_colors[i];
+    }
+    diffuse_color = clamp(diffuse_color, 0.0, 1.0);
+
+    outColor = vec4(0.4*ambient_color + 0.6*diffuse_color, 1.0);
 }

@@ -119,13 +119,16 @@ Terrain Terrain::createTerrain(const NoiseFunction &noise) {
     GLuint frag_shader = createAndCompileShader(GL_FRAGMENT_SHADER, frag_code.toString().data());
     rv.m_program = createProgramFromShaders(vert_shader, frag_shader);
     ViewAndProjectionBlock::setOffsets(rv.m_program, "ViewAndProjectionBlock");
+    LightListBlock::setOffsets(rv.m_program, "LightListBlock");
     rv.m_position_loc = 0;
     rv.m_normal_loc = 1;
     rv.m_model_loc = glGetUniformLocation(rv.m_program, "model");
-    rv.m_vp_block_loc = 0;
 
     GLuint vp_block_idx = glGetUniformBlockIndex(rv.m_program, "ViewAndProjectionBlock");
-    glUniformBlockBinding(rv.m_program, vp_block_idx, rv.m_vp_block_loc);
+    glUniformBlockBinding(rv.m_program, vp_block_idx, ViewAndProjectionBlock::BINDING_INDEX);
+
+    GLuint light_block_idx = glGetUniformBlockIndex(rv.m_program, "LightListBlock");
+    glUniformBlockBinding(rv.m_program, light_block_idx, LightListBlock::BINDING_INDEX);
 
     glDeleteShader(vert_shader);
     glDeleteShader(frag_shader);
@@ -168,8 +171,7 @@ Terrain::Terrain()
       m_num_elems{0},
       m_position_loc{-1},
       m_normal_loc{-1},
-      m_model_loc{-1},
-      m_vp_block_loc{std::numeric_limits<GLuint>::max()}
+      m_model_loc{-1}
 {}
 
 Terrain::~Terrain() {
@@ -203,11 +205,10 @@ Terrain::~Terrain() {
     m_array_object = 0;
 }
 
-void Terrain::render(glm::mat4x4 &model, const ViewAndProjectionBlock &vp_block) {
+void Terrain::render(glm::mat4x4 &model) {
     glUseProgram(m_program);
 
     glEnable(GL_DEPTH_TEST);
-    vp_block.bindToIndex(m_vp_block_loc);
     glUniformMatrix4fv(m_model_loc, 1, GL_FALSE, glm::value_ptr(model));
     glBindVertexArray(m_array_object);
 

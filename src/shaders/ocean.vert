@@ -1,18 +1,34 @@
 #version 430 core
 
-in vec3 position;
-in vec4 color;
-in vec3 normal;
+const int MAX_LIGHTS = 10;
+struct LightInfo {
+    bool enabled;
+    vec3 position;
+    // vec4 color;
+    // uint specular_exp;
+};
+
+layout(location = 0) in vec3 inPosition;
+layout(location = 1) in vec4 inColor;
+layout(location = 2) in vec3 inNormal;
+
+layout(shared) uniform ViewAndProjectionBlock {
+    mat4x4 view;
+    mat4x4 view_inv;
+    mat4x4 projection;
+};
+
+layout(shared) uniform LightListBlock {
+    LightInfo lights[MAX_LIGHTS];
+};
 
 uniform mat4x4 model;
-uniform mat4x4 view;
-uniform mat4x4 projection;
 
-out vec4 v_color;
-out vec4 v_normal;
+layout(location = 0) out vec4 outColor;
+layout(location = 1) out vec4 outNormal;
 
 void main(void) {
-    gl_Position = projection * view * model * vec4(position, 1.0);
-    v_normal = model * vec4(normal, 1.0);
-    v_color = color;
+    gl_Position = projection * view * model * vec4(inPosition, 1.0);
+    outNormal = model * vec4(inNormal, 1.0);
+    outColor = inColor;
 }
