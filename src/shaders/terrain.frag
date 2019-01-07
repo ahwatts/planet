@@ -45,7 +45,9 @@ void main(void) {
 
     vec3 diffuse_color = vec3(0.0, 0.0, 0.0);
     for (int i = 0; i < MAX_LIGHTS; ++i) {
-        diffuse_color += (1.0 / enabled_lights) * diffuse_colors[i];
+        if (lights[i].enabled) {
+            diffuse_color += (1.0 / enabled_lights) * diffuse_colors[i];
+        }
     }
     diffuse_color = clamp(diffuse_color, 0.0, 1.0);
 
