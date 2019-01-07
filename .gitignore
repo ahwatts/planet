@@ -1,3 +1,4 @@
 /target
 /.vscode
+/.dir-locals.el
 gmon.out
