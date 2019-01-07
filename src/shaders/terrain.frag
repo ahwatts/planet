@@ -3,14 +3,13 @@
 const int MAX_LIGHTS = 10;
 struct LightInfo {
     bool enabled;
-    vec3 position;
+    vec3 direction;
     // vec4 color;
     // uint specular_exp;
 };
 
 layout(location = 0) in float inHeight;
 layout(location = 1) in vec3 inNormal;
-layout(location = 2) in vec3 inLightDir[MAX_LIGHTS];
 
 layout(shared) uniform LightListBlock {
     LightInfo lights[MAX_LIGHTS];
@@ -32,16 +31,13 @@ void main(void) {
     }
 
     // No specular highlight for the terrain. Just an ambient and a diffuse
-    // term. The diffuse coefficient really should use the direction of the light source
-    // instead of the eye direction; we're basically specifying that the light
-    // is coming from the eye direction, then.
+    // term.
     int enabled_lights = 0;
-
     vec3 diffuse_colors[MAX_LIGHTS];
     for (int i = 0; i < MAX_LIGHTS; ++i) {
         if (lights[i].enabled) {
             enabled_lights += 1;
-            diffuse_colors[i] = color * dot(inNormal, inLightDir[i]);
+            diffuse_colors[i] = color * dot(inNormal, -1 * lights[i].direction);
         }
     }
 
@@ -53,5 +49,5 @@ void main(void) {
     }
     diffuse_color = clamp(diffuse_color, 0.0, 1.0);
 
-    outColor = vec4(0.4*ambient_color + 0.6*diffuse_color, 1.0);
+    outColor = vec4(0.1*ambient_color + 0.9*diffuse_color, 1.0);
 }

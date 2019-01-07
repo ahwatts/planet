@@ -149,7 +149,7 @@ void ViewAndProjectionBlock::destroyBuffer() {
 
 LightInfo::LightInfo()
     : enabled{GL_FALSE},
-      position{0.0, 0.0, 0.0}
+      direction{0.0, 0.0, 0.0}
 {}
 
 LightInfo::~LightInfo() {}
@@ -161,12 +161,7 @@ std::vector<LightOffsetInfo> LightListBlock::OFFSETS{};
 LightListBlock::LightListBlock()
     : m_buffer{0},
       m_light_info{NUM_LIGHTS}
-{
-    for (unsigned int i = 0; i < NUM_LIGHTS; ++i) {
-        m_light_info[i].enabled = GL_FALSE;
-        m_light_info[i].position = glm::vec3(0.0, 0.0, 0.0);
-    }
-}
+{}
 
 LightListBlock::~LightListBlock() {
     destroyBuffer();
@@ -217,8 +212,8 @@ void LightListBlock::setOffsets(GLuint program, const char *block_name) {
 
             if (field_str == "enabled") {
                 OFFSETS[light_index].enabled = unif_offs[i];
-            } else if (field_str == "position") {
-                OFFSETS[light_index].position = unif_offs[i];
+            } else if (field_str == "direction") {
+                OFFSETS[light_index].direction = unif_offs[i];
             // } else if (field_str == "color") {
             //     OFFSETS[light_index].color = unif_offs[i];
             // } else if (field_str == "specular_exp") {
@@ -235,9 +230,9 @@ void LightListBlock::setOffsets(GLuint program, const char *block_name) {
 }
 
 
-void LightListBlock::enableLight(unsigned int index, const glm::vec3 &position) {
+void LightListBlock::enableLight(unsigned int index, const glm::vec3 &direction) {
     m_light_info[index].enabled = GL_TRUE;
-    m_light_info[index].position = position;
+    m_light_info[index].direction = direction;
 }
 
 void LightListBlock::writeToBuffer() {
@@ -250,7 +245,7 @@ void LightListBlock::writeToBuffer() {
 
     for (unsigned int i = 0; i < NUM_LIGHTS; ++i) {
         std::memcpy(data + OFFSETS[i].enabled, &m_light_info[i].enabled, sizeof(m_light_info[i].enabled));
-        std::memcpy(data + OFFSETS[i].position, glm::value_ptr(m_light_info[i].position), sizeof(m_light_info[i].position));
+        std::memcpy(data + OFFSETS[i].direction, glm::value_ptr(m_light_info[i].direction), sizeof(m_light_info[i].direction));
         // std::memcpy(data + OFFSETS[i].color, glm::value_ptr(m_light_info[i].color), sizeof(m_light_info[i].color));
         // std::memcpy(data + OFFSETS[i].specular_exp, &m_light_info[i].specular_exp, sizeof(m_light_info[i].specular_exp));
     }

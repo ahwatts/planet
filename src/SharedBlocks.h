@@ -40,7 +40,7 @@ private:
 
 struct LightInfo {
     GLuint enabled;
-    glm::vec3 position;
+    glm::vec3 direction;
     // glm::vec4 color;
     // GLuint specular_exp;
 
@@ -49,7 +49,7 @@ struct LightInfo {
 };
 
 struct LightOffsetInfo {
-    GLuint enabled, position; // , color, specular_exp;
+    GLuint enabled, direction; // , color, specular_exp;
 };
 
 class LightListBlock {
@@ -60,7 +60,7 @@ public:
     static const GLuint BINDING_INDEX;
     static void setOffsets(GLuint program, const char *block_name);
 
-    void enableLight(unsigned int index, const glm::vec3 &position);
+    void enableLight(unsigned int index, const glm::vec3 &direction);
 
     void writeToBuffer();
     void bind() const;

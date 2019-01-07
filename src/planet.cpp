@@ -130,7 +130,7 @@ void runMainLoop(GLFWwindow *window) {
     vp_block.writeToBuffer();
 
     LightListBlock light_block{};
-    light_block.enableLight(0, glm::vec3(1.0, 1.0, 1.0));
+    light_block.enableLight(0, glm::normalize(glm::vec3(-1.0, -1.0, -1.0)));
     light_block.writeToBuffer();
 
     while (!glfwWindowShouldClose(window)) {
