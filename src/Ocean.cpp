@@ -24,13 +24,15 @@ Ocean Ocean::createOcean() {
 Ocean::Ocean()
     : m_array_buffer{0},
       m_elem_buffer{0},
+      m_specular_pow{40.0},
       m_program{0},
       m_array_object{0},
       m_num_elems{0},
       m_position_loc{-1},
       m_color_loc{-1},
       m_normal_loc{-1},
-      m_model_loc{-1}
+      m_model_loc{-1},
+      m_specular_pow_loc{-1}
 {}
 
 Ocean::~Ocean() {
@@ -69,6 +71,7 @@ void Ocean::render(const glm::mat4x4 &model) const {
 
     glEnable(GL_DEPTH_TEST);
     glUniformMatrix4fv(m_model_loc, 1, GL_FALSE, glm::value_ptr(model));
+    glUniform1f(m_specular_pow_loc, m_specular_pow);
     glBindVertexArray(m_array_object);
 
     // static int i = 0;
@@ -82,7 +85,6 @@ void Ocean::render(const glm::mat4x4 &model) const {
     glBindVertexArray(0);
     glUseProgram(0);
 }
-
 
 void Ocean::createBuffers() {
     PositionsAndElements sphere = icosphere(1.97, 5);
@@ -134,6 +136,7 @@ void Ocean::createProgram() {
     m_color_loc = 1;
     m_normal_loc = 2;
     m_model_loc = glGetUniformLocation(m_program, "model");
+    m_specular_pow_loc = glGetUniformLocation(m_program, "specular_pow");
 
     GLuint vp_block_idx = glGetUniformBlockIndex(m_program, "ViewAndProjectionBlock");
     glUniformBlockBinding(m_program, vp_block_idx, ViewAndProjectionBlock::BINDING_INDEX);

@@ -22,12 +22,14 @@ private:
     void createArrayObject();
 
     GLuint m_array_buffer, m_elem_buffer;
+    GLfloat m_specular_pow;
     GLuint m_program;
     GLuint m_array_object;
     GLuint m_num_elems;
 
     GLint m_position_loc, m_color_loc, m_normal_loc;
     GLint m_model_loc;
+    GLint m_specular_pow_loc;
 };
 
 #endif
