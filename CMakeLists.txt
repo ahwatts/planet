@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.11.0)
 project(planet)
+set(gcc_like_cxx "$<COMPILE_LANG_AND_ID:CXX,AppleClang,Clang,GNU>")
+set(msvc_cxx "$<COMPILE_LANG_AND_ID:CXX,MSVC>")
 
 if(WIN32)
     if (CMAKE_COMPILER_IS_GNUCXX)
@@ -11,10 +13,19 @@ if(WIN32)
     endif()
 endif()
 
-set(Boost_USE_STATIC_LIBS ON)
+set(Boost_USE_STATIC_LIBS "On")
 find_package(Boost REQUIRED COMPONENTS filesystem)
 find_package(glfw3 REQUIRED)
 find_package(glm REQUIRED)
+
+# GLM changed their library link target in a way that we can't really detect.
+if(TARGET glm::glm)
+    set(glm_library "glm::glm")
+elseif(TARGET glm)
+    set(glm_library "glm")
+else()
+    message(FATAL_ERROR "No glm link target found")
+endif()
 
 add_subdirectory(vendor/embed-resource)
 add_subdirectory(vendor/glad)
@@ -38,10 +49,18 @@ add_executable(planet
   src/planet.cpp
   ${SHADERS})
 target_compile_features(planet PUBLIC cxx_std_14)
+target_compile_options(planet PRIVATE
+    "$<${gcc_like_cxx}:-Wall>"
+    "$<$<AND:${gcc_like_cxx},$<CONFIG:Debug>>:-Og;-ggdb>"
+    "$<${msvc_cxx}:/W4>")
 target_include_directories(planet PUBLIC vendor/embed-resource)
-target_link_libraries(planet PUBLIC glad glfw glm)
+target_link_libraries(planet PUBLIC
+    glad
+    glfw
+    ${glm_library})
 
-if(CMAKE_COMPILER_IS_GNUCXX)
-    target_compile_options(planet PUBLIC "-Wall" "-Og" "-pg" "-ggdb")
-    set_target_properties(planet PROPERTIES LINK_FLAGS "-pg")
-endif()
+# if(CMAKE_COMPILER_IS_GNUCXX)
+#     target_compile_options(planet PUBLIC "-Wall" "-Og" "-ggdb")
+#     # target_compile_options(planet PUBLIC "-Wall" "-Og" "-pg" "-ggdb")
+#     # set_target_properties(planet PROPERTIES LINK_FLAGS "-pg")
+# endif()
