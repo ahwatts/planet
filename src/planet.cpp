@@ -3,6 +3,7 @@
 #include <iostream>
 #include <string>
 
+#include "glm_defines.h"
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/mat4x4.hpp>
 #include <glm/vec3.hpp>
@@ -10,6 +11,7 @@
 #include "opengl.h"
 
 #include "Curve.h"
+#include "Noise.h"
 #include "Ocean.h"
 #include "OpenGLUtils.h"
 #include "SharedBlocks.h"
@@ -25,6 +27,8 @@ void runMainLoop(GLFWwindow *window);
 const int WINDOW_WIDTH = 1024, WINDOW_HEIGHT = 768;
 const char *WINDOW_TITLE = "Planet Demo";
 
+#pragma warning(push)
+#pragma warning(disable: 4100)
 int main(int argc, char **argv) {
     GLFWwindow *window;
     initGlfw(WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_TITLE, &window);
@@ -36,6 +40,7 @@ int main(int argc, char **argv) {
     std::cout << "OpenGL vendor: " << glGetString(GL_VENDOR) << std::endl;
 
     glEnable(GL_SRGB);
+    checkOpenGLError("enabling srgb", false);
 
     runMainLoop(window);
 
@@ -43,6 +48,7 @@ int main(int argc, char **argv) {
     glfwTerminate();
     return 0;
 }
+#pragma warning(pop)
 
 void bailout(const std::string &msg) {
     std::cerr << msg << std::endl;
@@ -111,7 +117,7 @@ void runMainLoop(GLFWwindow *window) {
     const Curve curved_noise{octave_noise, spline};
 
     CurveDisplay curve_disp = CurveDisplay::createCurveDisplay(spline, -1.0, 1.0, -1.0, 1.0, 1000);
-    Terrain terrain = Terrain::createTerrain(curved_noise);
+    Terrain terrain{curved_noise};
     Ocean ocean = Ocean::createOcean();
 
     ViewAndProjectionBlock vp_block{};

@@ -1,7 +1,7 @@
 // -*- mode: c++; c-basic-offset: 4; indent-tabs-mode: nil -*-
 
-#ifndef _GRAPHPLAY_GRAPHPLAY_GFX_OPENGL_UTILS_H_
-#define _GRAPHPLAY_GRAPHPLAY_GFX_OPENGL_UTILS_H_
+#ifndef _PLANET_OPENGL_UTILS_H_
+#define _PLANET_OPENGL_UTILS_H_
 
 #include <map>
 #include <string>
@@ -11,8 +11,6 @@
 
 typedef std::map<std::string, GLuint> IndexMap;
 
-GLuint duplicateBuffer(GLenum target, GLuint src);
-GLuint duplicateVertexArrayObject(GLuint src);
 GLuint createAndCompileShader(GLenum shader_type, const char* shader_src);
 GLuint createProgramFromShaders(GLuint vertex_shader, GLuint fragment_shader);
 void getAttachedShaders(GLuint program, std::vector<GLuint> &shaders);
@@ -26,6 +24,6 @@ void dumpOpenGLState();
 void dumpProgramAttributes(GLuint progid, const char *prefix);
 void dumpProgramUniforms(GLuint progid, const char *prefix);
 
-void printOpenGLError();
+void checkOpenGLError(const char *msg, bool throw_ex);
 
 #endif

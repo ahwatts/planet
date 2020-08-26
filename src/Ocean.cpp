@@ -2,6 +2,7 @@
 
 #include <vector>
 
+#include "glm_defines.h"
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/mat4x4.hpp>
 
@@ -47,7 +48,7 @@ Ocean::~Ocean() {
     }
 
     if (bufs_to_delete.size() > 0) {
-        glDeleteBuffers(bufs_to_delete.size(), bufs_to_delete.data());
+        glDeleteBuffers(static_cast<GLsizei>(bufs_to_delete.size()), bufs_to_delete.data());
     }
 
     m_array_buffer = 0;
@@ -87,7 +88,7 @@ void Ocean::render(const glm::mat4x4 &model) const {
 }
 
 void Ocean::createBuffers() {
-    PositionsAndElements sphere = icosphere(1.97, 5);
+    PositionsAndElements sphere = icosphere(1.97f, 5);
     std::vector<PCNVertex> vertices(sphere.positions.size());
 
     for (unsigned int i = 0; i < sphere.positions.size(); ++i) {
@@ -95,7 +96,7 @@ void Ocean::createBuffers() {
         glm::vec3 norm = glm::normalize(pos);
         vertices[i] = {
             { pos.x, pos.y, pos.z },
-            { 0.2, 0.3, 0.6, 1.0 },
+            { 0.2f, 0.3f, 0.6f, 1.0f },
             { norm.x, norm.y, norm.z }
         };
     }
@@ -121,7 +122,7 @@ void Ocean::createBuffers() {
         GL_STATIC_DRAW);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
-    m_num_elems = sphere.elements.size();
+    m_num_elems = static_cast<GLuint>(sphere.elements.size());
 }
 
 void Ocean::createProgram() {
@@ -144,8 +145,8 @@ void Ocean::createProgram() {
     GLuint light_block_idx = glGetUniformBlockIndex(m_program, "LightListBlock");
     glUniformBlockBinding(m_program, light_block_idx, LightListBlock::BINDING_INDEX);
 
-    glDeleteShader(vert_shader);
-    glDeleteShader(frag_shader);
+    // glDeleteShader(vert_shader);
+    // glDeleteShader(frag_shader);
 }
 
 void Ocean::createArrayObject() {

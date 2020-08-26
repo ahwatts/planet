@@ -4,35 +4,10 @@
 #include <iomanip>
 #include <iostream>
 #include <sstream>
+#include <stdexcept>
 #include <vector>
 
 #include "OpenGLUtils.h"
-
-GLuint duplicateBuffer(GLenum target, GLuint src) {
-    if (glIsBuffer(src)) {
-        // Retrieve the size, usage, and data of the buffer.
-        GLint size = 0, usage = 0;
-        glBindBuffer(target, src);
-        glGetBufferParameteriv(target, GL_BUFFER_SIZE, &size);
-        glGetBufferParameteriv(target, GL_BUFFER_USAGE, &usage);
-        char *src_data = (char *)glMapBuffer(target, GL_READ_ONLY);
-        std::vector<char> inter_data(src_data, src_data + size);
-        glUnmapBuffer(target);
-        glBindBuffer(target, 0);
-
-        // Copy the data to a new buffer.
-        GLuint dst = 0;
-        glGenBuffers(1, &dst);
-        glBindBuffer(target, dst);
-        glBufferData(target, size, inter_data.data(), usage);
-        glBindBuffer(target, 0);
-
-        return dst;
-    }
-    else {
-        return 0;
-    }
-}
 
 struct VAPState {
     GLuint enabled;
@@ -46,116 +21,36 @@ struct VAPState {
     GLvoid *offset;
 };
 
-GLuint duplicateVertexArrayObject(GLuint src) {
-    if (glIsVertexArray(src)) {
-        glBindVertexArray(src);
-
-        GLint elem_binding = 0, max_attribs = 0;
-        glGetIntegerv(GL_ELEMENT_ARRAY_BUFFER_BINDING, &elem_binding);
-        glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &max_attribs);
-
-        VAPState *attribs = new VAPState[max_attribs];
-        for (auto i = 0; i < max_attribs; ++i) {
-            glGetVertexAttribIuiv(i, GL_VERTEX_ATTRIB_ARRAY_ENABLED, &attribs[i].enabled);
-            if (attribs[i].enabled) {
-                glGetVertexAttribIuiv(i, GL_VERTEX_ATTRIB_ARRAY_BUFFER_BINDING, &attribs[i].array_buffer_binding);
-                glGetVertexAttribIuiv(i, GL_VERTEX_ATTRIB_ARRAY_SIZE, &attribs[i].size);
-                glGetVertexAttribIuiv(i, GL_VERTEX_ATTRIB_ARRAY_STRIDE, &attribs[i].stride);
-                glGetVertexAttribIuiv(i, GL_VERTEX_ATTRIB_ARRAY_TYPE, &attribs[i].type);
-                glGetVertexAttribIuiv(i, GL_VERTEX_ATTRIB_ARRAY_NORMALIZED, &attribs[i].is_normalized);
-                glGetVertexAttribIuiv(i, GL_VERTEX_ATTRIB_ARRAY_INTEGER, &attribs[i].is_integer);
-                glGetVertexAttribIuiv(i, GL_VERTEX_ATTRIB_ARRAY_DIVISOR, &attribs[i].divisor);
-                glGetVertexAttribPointerv(i, GL_VERTEX_ATTRIB_ARRAY_POINTER, &attribs[i].offset);
-            }
-        }
-
-        glBindVertexArray(0);
-
-        GLuint dst = 0;
-        glGenVertexArrays(1, &dst);
-        glBindVertexArray(dst);
-
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elem_binding);
-        for (auto i = 0; i < max_attribs; ++i) {
-            if (attribs[i].enabled) {
-                glEnableVertexAttribArray(i);
-                glBindBuffer(GL_ARRAY_BUFFER, attribs[i].array_buffer_binding);
-                glVertexAttribDivisor(i, attribs[i].divisor);
-
-                switch (attribs[i].type) {
-                case GL_BYTE:
-                case GL_UNSIGNED_BYTE:
-                case GL_SHORT:
-                case GL_UNSIGNED_SHORT:
-                case GL_INT:
-                case GL_UNSIGNED_INT:
-                    if (attribs[i].is_integer) {
-                        glVertexAttribIPointer(i,
-                                                attribs[i].size,
-                                                attribs[i].type,
-                                                attribs[i].stride,
-                                                attribs[i].offset);
-                    }
-                    else {
-                        glVertexAttribPointer(i,
-                                                attribs[i].size,
-                                                attribs[i].type,
-                                                attribs[i].is_normalized,
-                                                attribs[i].stride,
-                                                attribs[i].offset);
-                    }
-                    break;
-                case GL_DOUBLE:
-                    glVertexAttribLPointer(i,
-                                            attribs[i].size,
-                                            attribs[i].type,
-                                            attribs[i].stride,
-                                            attribs[i].offset);
-                    break;
-                default:
-                    glVertexAttribPointer(i,
-                                            attribs[i].size,
-                                            attribs[i].type,
-                                            attribs[i].is_normalized,
-                                            attribs[i].stride,
-                                            attribs[i].offset);
-                    break;
-                }
-            }
-        }
-
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-        glBindVertexArray(0);
-        delete[] attribs;
-        return dst;
-    }
-    else {
-        return 0;
-    }
-}
-
 GLuint createAndCompileShader(GLenum shader_type, const char* shader_src) {
     GLuint shader = glCreateShader(shader_type);
+    checkOpenGLError("creating shader", true);
+    if (shader == 0) {
+        throw std::runtime_error("Error creating shader");
+    }
+
     GLint errlen, status, src_length = (GLint)std::strlen(shader_src);
 
     glShaderSource(shader, 1, &shader_src, &src_length);
+    checkOpenGLError("loading shader source", true);
     glCompileShader(shader);
+    checkOpenGLError("compiling shader", true);
     glGetShaderiv(shader, GL_COMPILE_STATUS, &status);
-    if (!status) {
+    checkOpenGLError("retrieving shader compile status", true);
+    if (status != GL_TRUE) {
         glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &errlen);
+        checkOpenGLError("retrieving shader info log length", true);
         char *err = new char[errlen];
         glGetShaderInfoLog(shader, errlen, NULL, err);
+        checkOpenGLError("retrieving shader info log", true);
 
         std::ostringstream msg_stream;
         msg_stream << "Could not compile shader!\n"
-                    << "  error: " << err << "\n"
-                    << "  source:\n" << shader_src << "\n";
+                   << "  error: " << err << "\n"
+                   << "  source:\n" << shader_src << "\n";
         delete[] err;
 
         std::string msg{msg_stream.str()};
         std::cerr << msg << std::endl;
-        throw msg;
     }
 
     return shader;
@@ -163,17 +58,27 @@ GLuint createAndCompileShader(GLenum shader_type, const char* shader_src) {
 
 GLuint createProgramFromShaders(GLuint vertex_shader, GLuint fragment_shader) {
     GLuint program = glCreateProgram();
+    if (program == 0) {
+        throw std::runtime_error("Error creating program");
+    }
+    
     glAttachShader(program, vertex_shader);
+    checkOpenGLError("attaching vertex shader", true);
     glAttachShader(program, fragment_shader);
+    checkOpenGLError("attaching fragment shader", true);
     glLinkProgram(program);
+    checkOpenGLError("linking program", true);
 
     GLint status;
     glGetProgramiv(program, GL_LINK_STATUS, &status);
-    if (!status) {
+    checkOpenGLError("retrieving program link status", true);
+    if (status != GL_TRUE) {
         GLint errlen;
         glGetProgramiv(program, GL_INFO_LOG_LENGTH, &errlen);
+        checkOpenGLError("retrieving program info log length", true);
         char *err = new char[errlen];
         glGetProgramInfoLog(program, errlen, NULL, err);
+        checkOpenGLError("retrieving program info log", true);
 
         std::stringstream msg_stream;
         msg_stream << "Could not link shader program: " << err;
@@ -181,7 +86,6 @@ GLuint createProgramFromShaders(GLuint vertex_shader, GLuint fragment_shader) {
 
         std::string msg{msg_stream.str()};
         std::cerr << msg;
-        throw msg;
     }
 
     return program;
@@ -468,14 +372,14 @@ int sizeOfGLType(GLenum type) {
 // }
 
 void dumpProgramAttributes(GLuint progid, const char *prefix) {
+    if (!glIsProgram(progid)) return;
+    
     GLint num_attribs = 0, max_name_len = 0, size = 0, location = -1;
     GLenum type = GL_INVALID_ENUM;
     char *name = nullptr;
     const char *sep = " | ";
     VAPState array_state;
     int num_array = 0, num_non_array = 0;
-
-    if (!glIsProgram(progid)) return;
 
     glGetProgramiv(progid, GL_ACTIVE_ATTRIBUTES, &num_attribs);
     glGetProgramiv(progid, GL_ACTIVE_ATTRIBUTE_MAX_LENGTH, &max_name_len);
@@ -596,6 +500,8 @@ void dumpProgramAttributes(GLuint progid, const char *prefix) {
 }
 
 void dumpProgramUniforms(GLuint progid, const char *prefix) {
+    if (!glIsProgram(progid)) { return; }
+    
     GLint num_unifs = 0, max_name_len = 0, location = -1;
     char *name = nullptr;
     const char *sep = " | ";
@@ -698,11 +604,15 @@ void dumpProgramUniforms(GLuint progid, const char *prefix) {
 }
 
 void dumpProgramUniformBlocks(GLuint progid) {
-        GLint num_things;
-    GLint max_name_len;
+    if (!glIsProgram(progid)) { return; }
+
+    GLint num_things = 0;
+    GLint max_name_len = 0;
+    
     glGetProgramiv(progid, GL_ACTIVE_UNIFORM_BLOCKS, &num_things);
     glGetProgramiv(progid, GL_ACTIVE_UNIFORM_BLOCK_MAX_NAME_LENGTH, &max_name_len);
     char *name = new char[max_name_len];
+    
     std::cout << "    Uniform blocks: " << num_things << std::endl;
     for (auto i = 0; i < num_things; ++i) {
         GLint binding = -1, bound_buffer = -1, num_uniforms = 0, data_size = 0;
@@ -797,38 +707,49 @@ void dumpOpenGLState() {
     std::cout << std::endl;
 }
 
-void printOpenGLError() {
-    GLenum err = glGetError();
-    while (err != GL_NO_ERROR) {
-        std::cerr << "GL error: " << err;
-        switch (err) {
-        case GL_INVALID_ENUM:
-            std::cerr << " Invalid enum";
-            break;
-        case GL_INVALID_VALUE:
-            std::cerr << " Invalid value";
-            break;
-        case GL_INVALID_OPERATION:
-            std::cerr << " Invalid operation";
-            break;
-        case GL_INVALID_FRAMEBUFFER_OPERATION:
-            std::cerr << " Invalid framebuffer operation";
-            break;
-        case GL_OUT_OF_MEMORY:
-            std::cerr << " Out of memory";
-            break;
+void checkOpenGLError(const char *where, bool throw_ex) {
+    GLenum error = glGetError();
+    std::stringstream msg;
+
+    if (error != GL_NO_ERROR) {
+        msg << "OpenGL error(s) while " << where << ":\n";
+        while (error != GL_NO_ERROR) {
+            switch (error) {
+            case GL_INVALID_ENUM:
+                msg << "Invalid enum" ;
+                break;
+            case GL_INVALID_VALUE:
+                msg << "Invalid value";
+                break;
+            case GL_INVALID_OPERATION:
+                msg << "Invalid operation";
+                break;
+            case GL_INVALID_FRAMEBUFFER_OPERATION:
+                msg << "Invalid framebuffer operation";
+                break;
+            case GL_OUT_OF_MEMORY:
+                msg << "Out of memory";
+                break;
 #ifdef GL_STACK_UNDERFLOW
-        case GL_STACK_UNDERFLOW:
-            std::cerr << " Stack underflow";
-            break;
+            case GL_STACK_UNDERFLOW:
+                msg << "Stack underflow";
+                break;
 #endif
 #ifdef GL_STACK_OVERFLOW
-        case GL_STACK_OVERFLOW:
-            std::cerr << " Stack overflow";
-            break;
+            case GL_STACK_OVERFLOW:
+                msg << "Stack overflow";
+                break;
 #endif
+            }
+            msg << " (" << error << ")\n";
+            error = glGetError();
         }
-        std::cerr << std::endl;
-        err = glGetError();
+
+        if (throw_ex) {
+            throw std::runtime_error(msg.str());
+        } else {
+            std::cerr << msg.str();
+        }
+        
     }
 }

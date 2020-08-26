@@ -4,6 +4,7 @@
 #include <iostream>
 #include <vector>
 
+#include "glm_defines.h"
 #include <glm/mat4x4.hpp>
 #include <glm/vec2.hpp>
 
@@ -220,8 +221,8 @@ void CurveDisplay::createProgram() {
     m_program = createProgramFromShaders(vert_shader, frag_shader);
     m_position_loc = 0;
 
-    glDeleteShader(vert_shader);
-    glDeleteShader(frag_shader);
+    // glDeleteShader(vert_shader);
+    // glDeleteShader(frag_shader);
 }
 
 void CurveDisplay::createArrayObject() {

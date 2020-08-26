@@ -13,7 +13,7 @@ PermutationTable::PermutationTable() {
     std::default_random_engine engine{seed()};
 
     for (int i = 0; i < 256; ++i) {
-        table[i] = i;
+        table[i] = static_cast<unsigned char>(i);
     }
 
     std::uniform_int_distribution<int> random_int{0, std::numeric_limits<int>::max()};

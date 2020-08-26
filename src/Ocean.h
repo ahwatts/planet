@@ -3,6 +3,7 @@
 #ifndef _PLANET_OCEAN_H_
 #define _PLANET_OCEAN_H_
 
+#include "glm_defines.h"
 #include <glm/mat4x4.hpp>
 
 #include "opengl.h"
