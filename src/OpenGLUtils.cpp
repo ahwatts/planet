@@ -23,7 +23,6 @@ struct VAPState {
 
 GLuint createAndCompileShader(GLenum shader_type, const char* shader_src) {
     GLuint shader = glCreateShader(shader_type);
-    checkOpenGLError("creating shader", true);
     if (shader == 0) {
         throw std::runtime_error("Error creating shader");
     }
@@ -31,17 +30,12 @@ GLuint createAndCompileShader(GLenum shader_type, const char* shader_src) {
     GLint errlen, status, src_length = (GLint)std::strlen(shader_src);
 
     glShaderSource(shader, 1, &shader_src, &src_length);
-    checkOpenGLError("loading shader source", true);
     glCompileShader(shader);
-    checkOpenGLError("compiling shader", true);
     glGetShaderiv(shader, GL_COMPILE_STATUS, &status);
-    checkOpenGLError("retrieving shader compile status", true);
     if (status != GL_TRUE) {
         glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &errlen);
-        checkOpenGLError("retrieving shader info log length", true);
         char *err = new char[errlen];
         glGetShaderInfoLog(shader, errlen, NULL, err);
-        checkOpenGLError("retrieving shader info log", true);
 
         std::ostringstream msg_stream;
         msg_stream << "Could not compile shader!\n"
@@ -63,22 +57,16 @@ GLuint createProgramFromShaders(GLuint vertex_shader, GLuint fragment_shader) {
     }
     
     glAttachShader(program, vertex_shader);
-    checkOpenGLError("attaching vertex shader", true);
     glAttachShader(program, fragment_shader);
-    checkOpenGLError("attaching fragment shader", true);
     glLinkProgram(program);
-    checkOpenGLError("linking program", true);
 
     GLint status;
     glGetProgramiv(program, GL_LINK_STATUS, &status);
-    checkOpenGLError("retrieving program link status", true);
     if (status != GL_TRUE) {
         GLint errlen;
         glGetProgramiv(program, GL_INFO_LOG_LENGTH, &errlen);
-        checkOpenGLError("retrieving program info log length", true);
         char *err = new char[errlen];
         glGetProgramInfoLog(program, errlen, NULL, err);
-        checkOpenGLError("retrieving program info log", true);
 
         std::stringstream msg_stream;
         msg_stream << "Could not link shader program: " << err;
@@ -707,6 +695,7 @@ void dumpOpenGLState() {
     std::cout << std::endl;
 }
 
+/*
 void checkOpenGLError(const char *where, bool throw_ex) {
     GLenum error = glGetError();
     std::stringstream msg;
@@ -752,4 +741,85 @@ void checkOpenGLError(const char *where, bool throw_ex) {
         }
         
     }
+}
+*/
+
+void APIENTRY handleDebugMessage(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar *message, const void *userParam) {
+    std::stringstream msg;
+
+    switch (source) {
+    case GL_DEBUG_SOURCE_API:
+        msg << "API: ";
+        break;
+    case GL_DEBUG_SOURCE_APPLICATION:
+        msg << "Application: ";
+        break;
+    case GL_DEBUG_SOURCE_OTHER:
+        msg << "Other Source: ";
+        break;
+    case GL_DEBUG_SOURCE_SHADER_COMPILER:
+        msg << "Shader Compiler: ";
+        break;
+    case GL_DEBUG_SOURCE_THIRD_PARTY:
+        msg << "Third Party: ";
+        break;
+    case GL_DEBUG_SOURCE_WINDOW_SYSTEM:
+        msg << "Window System: ";
+        break;
+    default:
+        msg << "Unknown Source: ";
+    }
+
+    switch (type) {
+    case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR:
+        msg << "Deprecated Behavior: ";
+        break;
+    case GL_DEBUG_TYPE_ERROR:
+        msg << "Error: ";
+        break;
+    case GL_DEBUG_TYPE_MARKER:
+        msg << "Marker: ";
+        break;
+    case GL_DEBUG_TYPE_OTHER:
+        msg << "Other Type: ";
+        break;
+    case GL_DEBUG_TYPE_PERFORMANCE:
+        msg << "Performance: ";
+        break;
+    case GL_DEBUG_TYPE_POP_GROUP:
+        msg << "Pop Group: ";
+        break;
+    case GL_DEBUG_TYPE_PORTABILITY:
+        msg << "Portability: ";
+        break;
+    case GL_DEBUG_TYPE_PUSH_GROUP:
+        msg << "Push Group: ";
+        break;
+    case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR:
+        msg << "Undefined Behavior: ";
+        break;
+    default:
+        msg << "Unknown Type: ";
+    }
+
+    msg << id << " ";
+
+    switch (severity) {
+    case GL_DEBUG_SEVERITY_HIGH:
+        msg << "[HIGH] ";
+        break;
+    case GL_DEBUG_SEVERITY_LOW:
+        msg << "[LOW] ";
+        break;
+    case GL_DEBUG_SEVERITY_MEDIUM:
+        msg << "[MED] ";
+        break;
+    case GL_DEBUG_SEVERITY_NOTIFICATION:
+        msg << "[NOTE] ";
+        break;
+    }
+
+    msg << message;
+
+    std::cout << msg.str() << std::endl;
 }

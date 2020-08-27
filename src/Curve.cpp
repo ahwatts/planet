@@ -157,7 +157,6 @@ void CurveDisplay::render() const {
     glUseProgram(m_program);
 
     glDisable(GL_DEPTH_TEST);
-    glLineWidth(2.0);
     glBindVertexArray(m_array_object);
     glDrawArrays(GL_LINE_STRIP, 0, static_cast<GLsizei>(m_vertices.size()));
 

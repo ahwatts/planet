@@ -24,6 +24,8 @@ void dumpOpenGLState();
 void dumpProgramAttributes(GLuint progid, const char *prefix);
 void dumpProgramUniforms(GLuint progid, const char *prefix);
 
-void checkOpenGLError(const char *msg, bool throw_ex);
+// void checkOpenGLError(const char *msg, bool throw_ex);
+
+void APIENTRY handleDebugMessage(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar *message, const void *userParam);
 
 #endif

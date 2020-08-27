@@ -21,6 +21,7 @@ void bailout(const std::string &msg);
 void handleGlfwError(int code, const char *desc);
 void initGlad();
 void initGlfw(int width, int height, const char *title, GLFWwindow **window);
+void initOpenGL();
 void keypress(GLFWwindow *window, int key, int scancode, int action, int mods);
 void runMainLoop(GLFWwindow *window);
 
@@ -33,6 +34,7 @@ int main(int argc, char **argv) {
     GLFWwindow *window;
     initGlfw(WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_TITLE, &window);
     initGlad();
+    initOpenGL();
 
     std::cout << "OpenGL version: " << glGetString(GL_VERSION) << std::endl;
     std::cout << "GLSL version: " << glGetString(GL_SHADING_LANGUAGE_VERSION) << std::endl;
@@ -75,6 +77,7 @@ void initGlfw(int width, int height, const char *title, GLFWwindow **window) {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
     *window = glfwCreateWindow(width, height, title, nullptr, nullptr);
 
     if (!*window) {
@@ -83,6 +86,12 @@ void initGlfw(int width, int height, const char *title, GLFWwindow **window) {
 
     glfwMakeContextCurrent(*window);
     glfwSetKeyCallback(*window, keypress);
+}
+
+void initOpenGL() {
+    glEnable(GL_DEBUG_OUTPUT);
+    glDebugMessageCallback(handleDebugMessage, nullptr);
+    glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
 }
 
 void keypress(GLFWwindow *window, int key, int scancode, int action, int mode) {
