@@ -123,39 +123,39 @@ void runMainLoop(GLFWwindow *window) {
     const Curve curved_noise{octave_noise, spline};
 
     CurveDisplay curve_disp{spline, -1.0, 1.0, -1.0, 1.0, 1000};
-    // Terrain terrain{curved_noise};
+    Terrain terrain{curved_noise};
     // Ocean ocean = Ocean::createOcean();
 
-    // ViewAndProjectionBlock vp_block{};
-    // static float angle = 0.0;
-    // glm::mat4x4 model{1.0};
-    // glm::mat4x4 view = glm::lookAt(
-    //     glm::vec3{ 0.0, 0.0, 5.0 },
-    //     glm::vec3{ 0.0, 0.0, 0.0 },
-    //     glm::vec3{ 0.0, 1.0, 0.0 }
-    // );
-    // glm::mat4x4 projection = glm::perspectiveFov(
-    //     20.0f, (float)WINDOW_WIDTH, (float)WINDOW_HEIGHT, 0.1f, 100.0f
-    // );
-    // vp_block.setProjection(projection);
-    // vp_block.setView(view);
-    // vp_block.writeToBuffer();
+    ViewAndProjectionBlock vp_block{};
+    static float angle = 0.0;
+    glm::mat4x4 model{1.0};
+    glm::mat4x4 view = glm::lookAt(
+        glm::vec3{ 0.0, 0.0, 5.0 },
+        glm::vec3{ 0.0, 0.0, 0.0 },
+        glm::vec3{ 0.0, 1.0, 0.0 }
+    );
+    glm::mat4x4 projection = glm::perspectiveFov(
+        20.0f, (float)WINDOW_WIDTH, (float)WINDOW_HEIGHT, 0.1f, 100.0f
+    );
+    vp_block.setProjection(projection);
+    vp_block.setView(view);
+    vp_block.writeToBuffer();
 
-    // LightListBlock light_block{};
-    // light_block.enableLight(0, glm::normalize(glm::vec3(-1.0, -1.0, -1.0)));
-    // light_block.writeToBuffer();
+    LightListBlock light_block{};
+    light_block.enableLight(0, glm::normalize(glm::vec3(-1.0, -1.0, -1.0)));
+    light_block.writeToBuffer();
 
     while (!glfwWindowShouldClose(window)) {
-        // glm::mat4x4 model2 = glm::rotate(model, glm::radians(angle), glm::vec3(0.0, 1.0, 0.0));
+        glm::mat4x4 model2 = glm::rotate(model, glm::radians(angle), glm::vec3(0.0, 1.0, 0.0));
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // vp_block.bind();
-        // light_block.bind();
-        // terrain.render(model2);
+        vp_block.bind();
+        light_block.bind();
+        terrain.render(model2);
         // ocean.render(model2);
-        // vp_block.unbind();
-        // light_block.unbind();
+        vp_block.unbind();
+        light_block.unbind();
 
         curve_disp.render();
 
@@ -163,9 +163,9 @@ void runMainLoop(GLFWwindow *window) {
 
         glfwPollEvents();
 
-        // angle += 0.5;
-        // if (angle > 360.0) {
-        //     angle = 0.0;
-        // }
+        angle += 0.5;
+        if (angle > 360.0) {
+            angle = 0.0;
+        }
     }
 }

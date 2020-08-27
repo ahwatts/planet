@@ -58,7 +58,18 @@ Terrain::~Terrain() {
     m_elem_buffer = 0;
 
     if (glIsProgram(m_program)) {
-        std::cout << "Deleting terrain program" << std::endl;
+        if (glIsShader(m_vertex_shader)) {
+            glDetachShader(m_program, m_vertex_shader);
+            glDeleteShader(m_vertex_shader);
+        }
+        m_vertex_shader = 0;
+        
+        if (glIsShader(m_fragment_shader)) {
+            glDetachShader(m_program, m_fragment_shader);
+            glDeleteShader(m_fragment_shader);
+        }
+        m_fragment_shader = 0;
+        
         glDeleteProgram(m_program);
     }
 
