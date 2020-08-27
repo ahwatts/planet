@@ -1,17 +1,15 @@
 // -*- mode: c++; c-basic-offset: 4; indent-tabs-mode: nil; -*-
 
-#include <algorithm>
-#include <iostream>
+#include <cmath>
+#include <limits>
 #include <vector>
 
 #include "glm_defines.h"
-#include <glm/mat4x4.hpp>
 #include <glm/vec2.hpp>
 
 #include "opengl.h"
 
 #include "Curve.h"
-#include "Noise.h"
 #include "OpenGLUtils.h"
 #include "Resource.h"
 
@@ -106,63 +104,43 @@ void CubicSpline::generateCoeffs() {
     m_coeffs[0] = 0;
 }
 
-CurveDisplay CurveDisplay::createCurveDisplay(CubicSpline &curve, double min_x, double max_x, double min_y, double max_y, int num_points) {
-    CurveDisplay rv;
-
-    std::vector<glm::vec2> positions;
-    std::vector<unsigned int> elements;
-    double domain = max_x - min_x;
-    double range = max_y - min_y;
-    double h = domain / (num_points - 1);
-    for (int i = 0; i < num_points; ++i) {
-        double x = min_x + i*h;
-        double y = curve(x);
-
-        double clip_x = 1.8*(x - min_x)/domain - 0.9;
-        double clip_y = 0.9*(y - min_y)/range - 0.9;
-
-        // std::cout << "(" << x << ", " << y << ") -> (" << clip_x << ", " << clip_y << ")" << std::endl;
-
-        elements.push_back(static_cast<unsigned int>(positions.size()));
-        positions.push_back({ clip_x, clip_y });
-    }
-
-    rv.createBuffers(positions, elements);
-    rv.createProgram();
-    rv.createArrayObject();
-
-    return rv;
-}
-
 CurveDisplay::CurveDisplay()
-    : m_array_buffer{0},
-      m_elem_buffer{0},
+    : m_vertices{},
+      m_array_buffer{0},
+      m_vertex_shader{0},
+      m_fragment_shader{0},
       m_program{0},
-      m_array_object{0},
-      m_num_elems{0},
-      m_position_loc{0},
-      m_color_loc{0}
+      m_position_loc{-1},
+      m_array_object{0}
 {}
 
+CurveDisplay::CurveDisplay(const CubicSpline &curve, double min_x, double max_x, double min_y, double max_y, int num_points): CurveDisplay() {
+    initGeometry(curve, min_x, max_x, min_y, max_y, num_points);
+    initBuffer();
+    initProgram();
+    initVAO();
+}
+
 CurveDisplay::~CurveDisplay() {
-    std::vector<GLuint> bufs_to_delete;
-
     if (glIsBuffer(m_array_buffer)) {
-        bufs_to_delete.push_back(m_array_buffer);
-    }
-
-    if (glIsBuffer(m_elem_buffer)) {
-        bufs_to_delete.push_back(m_elem_buffer);
-    }
-
-    if (bufs_to_delete.size() > 0) {
-        glDeleteBuffers(static_cast<GLsizei>(bufs_to_delete.size()), bufs_to_delete.data());
+        glDeleteBuffers(1, &m_array_buffer);
     }
 
     m_array_buffer = 0;
-    m_elem_buffer = 0;
 
     if (glIsProgram(m_program)) {
+        if (glIsShader(m_vertex_shader)) {
+            glDetachShader(m_program, m_vertex_shader);
+            glDeleteShader(m_vertex_shader);
+        }
+        m_vertex_shader = 0;
+
+        if (glIsShader(m_fragment_shader)) {
+            glDetachShader(m_program, m_fragment_shader);
+            glDeleteShader(m_fragment_shader);
+        }
+        m_fragment_shader = 0;
+        
         glDeleteProgram(m_program);
     }
 
@@ -181,56 +159,58 @@ void CurveDisplay::render() const {
     glDisable(GL_DEPTH_TEST);
     glLineWidth(2.0);
     glBindVertexArray(m_array_object);
-    glDrawElements(GL_LINE_STRIP, m_num_elems, GL_UNSIGNED_INT, 0);
+    glDrawArrays(GL_LINE_STRIP, 0, static_cast<GLsizei>(m_vertices.size()));
 
     glBindVertexArray(0);
     glUseProgram(0);
 }
 
-void CurveDisplay::createBuffers(const std::vector<glm::vec2> &vertices, const std::vector<unsigned int> &elems) {
-    GLuint buffers[2];
-    glGenBuffers(2, buffers);
-    m_array_buffer = buffers[0];
-    m_elem_buffer = buffers[1];
+void CurveDisplay::initGeometry(const CubicSpline &curve, double min_x, double max_x, double min_y, double max_y, int num_points) {
+    m_vertices.resize(num_points);
+    double domain = max_x - min_x;
+    double range = max_y - min_y;
+    double h = domain / (num_points - 1);
+    for (int i = 0; i < num_points; ++i) {
+        double x = min_x + i*h;
+        double y = curve(x);
+
+        double clip_x = 1.8*(x - min_x)/domain - 0.9;
+        double clip_y = 0.9*(y - min_y)/range - 0.9;
+
+        // std::cout << "(" << x << ", " << y << ") -> (" << clip_x << ", " << clip_y << ")" << std::endl;
+
+        m_vertices[i].x = static_cast<float>(clip_x);
+        m_vertices[i].y = static_cast<float>(clip_y);
+    }
+}
+
+void CurveDisplay::initBuffer() {
+    glGenBuffers(2, &m_array_buffer);
 
     glBindBuffer(GL_ARRAY_BUFFER, m_array_buffer);
     glBufferData(
         GL_ARRAY_BUFFER,
-        vertices.size()*sizeof(glm::vec2),
-        vertices.data(),
+        m_vertices.size()*sizeof(glm::vec2),
+        m_vertices.data(),
         GL_STATIC_DRAW);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_elem_buffer);
-    glBufferData(
-        GL_ELEMENT_ARRAY_BUFFER,
-        elems.size()*sizeof(unsigned int),
-        elems.data(),
-        GL_STATIC_DRAW);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-
-    m_num_elems = static_cast<unsigned int>(elems.size());
 }
 
-void CurveDisplay::createProgram() {
+void CurveDisplay::initProgram() {
     Resource vert_code = LOAD_RESOURCE(curve_vert);
     Resource frag_code = LOAD_RESOURCE(curve_frag);
 
-    GLuint vert_shader = createAndCompileShader(GL_VERTEX_SHADER, vert_code.toString().data());
-    GLuint frag_shader = createAndCompileShader(GL_FRAGMENT_SHADER, frag_code.toString().data());
-    m_program = createProgramFromShaders(vert_shader, frag_shader);
+    m_vertex_shader = createAndCompileShader(GL_VERTEX_SHADER, vert_code.toString().data());
+    m_fragment_shader = createAndCompileShader(GL_FRAGMENT_SHADER, frag_code.toString().data());
+    m_program = createProgramFromShaders(m_vertex_shader, m_fragment_shader);
     m_position_loc = 0;
-
-    // glDeleteShader(vert_shader);
-    // glDeleteShader(frag_shader);
 }
 
-void CurveDisplay::createArrayObject() {
+void CurveDisplay::initVAO() {
     glGenVertexArrays(1, &m_array_object);
     glUseProgram(m_program);
     glBindVertexArray(m_array_object);
     glBindBuffer(GL_ARRAY_BUFFER, m_array_buffer);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_elem_buffer);
 
     glEnableVertexAttribArray(m_position_loc);
     glVertexAttribPointer(
@@ -242,6 +222,5 @@ void CurveDisplay::createArrayObject() {
 
     glBindVertexArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     glUseProgram(0);
 }

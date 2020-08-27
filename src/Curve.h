@@ -6,7 +6,6 @@
 #include <vector>
 
 #include "glm_defines.h"
-#include <glm/mat4x4.hpp>
 #include <glm/vec2.hpp>
 
 #include "opengl.h"
@@ -29,24 +28,32 @@ private:
 
 class CurveDisplay {
 public:
-    static CurveDisplay createCurveDisplay(CubicSpline &curve, double min_x, double max_x, double min_y, double max_y, int num_points);
+    CurveDisplay(const CubicSpline &curve, double min_x, double max_x, double min_y, double max_y, int num_points);
+    CurveDisplay(const CurveDisplay &other) = delete;
+    CurveDisplay(CurveDisplay &&other) = delete;
     ~CurveDisplay();
+
+    CurveDisplay& operator=(const CurveDisplay &other) = delete;
+    CurveDisplay& operator=(CurveDisplay &&other) = delete;
 
     void render() const;
 
 private:
     CurveDisplay();
 
-    void createBuffers(const std::vector<glm::vec2> &verts, const std::vector<unsigned int> &elems);
-    void createProgram();
-    void createArrayObject();
-    
-    GLuint m_array_buffer, m_elem_buffer;
-    GLuint m_program;
-    GLuint m_array_object;
-    GLuint m_num_elems;
+    void initGeometry(const CubicSpline &curve, double min_x, double max_x, double min_y, double max_y, int num_points);
+    void initBuffer();
+    void initProgram();
+    void initVAO();
 
-    GLint m_position_loc, m_color_loc;
+    std::vector<glm::vec2> m_vertices;
+    
+    GLuint m_array_buffer;
+    
+    GLuint m_vertex_shader, m_fragment_shader, m_program;
+    GLint m_position_loc;
+    
+    GLuint m_array_object;
 };
 
 #endif
