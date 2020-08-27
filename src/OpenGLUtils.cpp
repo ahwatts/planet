@@ -744,6 +744,10 @@ void checkOpenGLError(const char *where, bool throw_ex) {
 }
 */
 
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable: 4100)
+#endif
 void APIENTRY handleDebugMessage(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar *message, const void *userParam) {
     std::stringstream msg;
 
@@ -823,3 +827,6 @@ void APIENTRY handleDebugMessage(GLenum source, GLenum type, GLuint id, GLenum s
 
     std::cout << msg.str() << std::endl;
 }
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif

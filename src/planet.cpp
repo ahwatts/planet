@@ -28,8 +28,10 @@ void runMainLoop(GLFWwindow *window);
 const int WINDOW_WIDTH = 1024, WINDOW_HEIGHT = 768;
 const char *WINDOW_TITLE = "Planet Demo";
 
+#ifdef _MSC_VER
 #pragma warning(push)
 #pragma warning(disable: 4100)
+#endif
 int main(int argc, char **argv) {
     GLFWwindow *window;
     initGlfw(WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_TITLE, &window);
@@ -47,7 +49,9 @@ int main(int argc, char **argv) {
     glfwTerminate();
     return 0;
 }
+#ifdef _MSC_VER
 #pragma warning(pop)
+#endif
 
 void bailout(const std::string &msg) {
     std::cerr << msg << std::endl;
