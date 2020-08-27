@@ -14,27 +14,28 @@
 #include "Resource.h"
 #include "SharedBlocks.h"
 
-Ocean Ocean::createOcean() {
-    Ocean rv;
-    rv.createBuffers();
-    rv.createProgram();
-    rv.createArrayObject();
-    return rv;
-}
-
 Ocean::Ocean()
-    : m_array_buffer{0},
+    : m_vertices{},
+      m_indices{},
+      m_specular_pow{0.0},
+      m_array_buffer{0},
       m_elem_buffer{0},
-      m_specular_pow{40.0},
+      m_vertex_shader{0},
+      m_fragment_shader{0},
       m_program{0},
-      m_array_object{0},
-      m_num_elems{0},
       m_position_loc{-1},
       m_color_loc{-1},
       m_normal_loc{-1},
       m_model_loc{-1},
-      m_specular_pow_loc{-1}
-{}
+      m_specular_pow_loc{-1},
+      m_array_object{0}
+{
+    initGeometry();
+    m_specular_pow = 40.0;
+    initBuffers();
+    initProgram();
+    initVAO();
+}
 
 Ocean::~Ocean() {
     std::vector<GLuint> bufs_to_delete;
@@ -55,6 +56,18 @@ Ocean::~Ocean() {
     m_elem_buffer = 0;
 
     if (glIsProgram(m_program)) {
+        if (glIsShader(m_vertex_shader)) {
+            glDetachShader(m_program, m_vertex_shader);
+            glDeleteShader(m_vertex_shader);
+        }
+        m_vertex_shader = 0;
+        
+        if (glIsShader(m_fragment_shader)) {
+            glDetachShader(m_program, m_fragment_shader);
+            glDeleteShader(m_fragment_shader);
+        }
+        m_fragment_shader = 0;
+        
         glDeleteProgram(m_program);
     }
 
@@ -81,26 +94,29 @@ void Ocean::render(const glm::mat4x4 &model) const {
     // }
     // ++i;
 
-    glDrawElements(GL_TRIANGLES, m_num_elems, GL_UNSIGNED_INT, 0);
+    glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(m_indices.size()), GL_UNSIGNED_INT, 0);
 
     glBindVertexArray(0);
     glUseProgram(0);
 }
 
-void Ocean::createBuffers() {
+void Ocean::initGeometry() {
     PositionsAndElements sphere = icosphere(1.97f, 5);
-    std::vector<PCNVertex> vertices(sphere.positions.size());
+    m_vertices.resize(sphere.positions.size());
+    m_indices = sphere.elements;
 
     for (unsigned int i = 0; i < sphere.positions.size(); ++i) {
         glm::vec3 &pos = sphere.positions[i];
         glm::vec3 norm = glm::normalize(pos);
-        vertices[i] = {
+        m_vertices[i] = {
             { pos.x, pos.y, pos.z },
             { 0.2f, 0.3f, 0.6f, 1.0f },
             { norm.x, norm.y, norm.z }
         };
     }
+}
 
+void Ocean::initBuffers() {
     GLuint bufs[2];
     glGenBuffers(2, bufs);
     m_array_buffer = bufs[0];
@@ -109,29 +125,27 @@ void Ocean::createBuffers() {
     glBindBuffer(GL_ARRAY_BUFFER, m_array_buffer);
     glBufferData(
         GL_ARRAY_BUFFER,
-        vertices.size()*sizeof(PCNVertex),
-        vertices.data(),
+        m_vertices.size()*sizeof(PCNVertex),
+        m_vertices.data(),
         GL_STATIC_DRAW);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_elem_buffer);
     glBufferData(
         GL_ELEMENT_ARRAY_BUFFER,
-        sphere.elements.size()*sizeof(unsigned int),
-        sphere.elements.data(),
+        m_indices.size()*sizeof(GLuint),
+        m_indices.data(),
         GL_STATIC_DRAW);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-
-    m_num_elems = static_cast<GLuint>(sphere.elements.size());
 }
 
-void Ocean::createProgram() {
+void Ocean::initProgram() {
     Resource vert_code = LOAD_RESOURCE(ocean_vert);
     Resource frag_code = LOAD_RESOURCE(ocean_frag);
 
-    GLuint vert_shader = createAndCompileShader(GL_VERTEX_SHADER, vert_code.toString().data());
-    GLuint frag_shader = createAndCompileShader(GL_FRAGMENT_SHADER, frag_code.toString().data());
-    m_program = createProgramFromShaders(vert_shader, frag_shader);
+    m_vertex_shader = createAndCompileShader(GL_VERTEX_SHADER, vert_code.toString().data());
+    m_fragment_shader = createAndCompileShader(GL_FRAGMENT_SHADER, frag_code.toString().data());
+    m_program = createProgramFromShaders(m_vertex_shader, m_fragment_shader);
     LightListBlock::setOffsets(m_program, "LightListBlock");
     m_position_loc = 0;
     m_color_loc = 1;
@@ -144,12 +158,9 @@ void Ocean::createProgram() {
 
     GLuint light_block_idx = glGetUniformBlockIndex(m_program, "LightListBlock");
     glUniformBlockBinding(m_program, light_block_idx, LightListBlock::BINDING_INDEX);
-
-    // glDeleteShader(vert_shader);
-    // glDeleteShader(frag_shader);
 }
 
-void Ocean::createArrayObject() {
+void Ocean::initVAO() {
     glGenVertexArrays(1, &m_array_object);
     glUseProgram(m_program);
     glBindVertexArray(m_array_object);
@@ -161,7 +172,7 @@ void Ocean::createArrayObject() {
         m_position_loc,
         3, GL_FLOAT, GL_FALSE,
         sizeof(PCNVertex),
-        (const void *)(0)
+        (const void *)(offsetof(PCNVertex, position))
     );
 
     glEnableVertexAttribArray(m_color_loc);
@@ -169,7 +180,7 @@ void Ocean::createArrayObject() {
         m_color_loc,
         4, GL_FLOAT, GL_FALSE,
         sizeof(PCNVertex),
-        (const void *)(3*sizeof(float))
+        (const void *)(offsetof(PCNVertex, color))
     );
 
     glEnableVertexAttribArray(m_normal_loc);
@@ -177,7 +188,7 @@ void Ocean::createArrayObject() {
         m_normal_loc,
         3, GL_FLOAT, GL_FALSE,
         sizeof(PCNVertex),
-        (const void *)(7*sizeof(float))
+        (const void *)(offsetof(PCNVertex, normal))
     );
 
     glBindVertexArray(0);

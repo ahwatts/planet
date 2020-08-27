@@ -114,7 +114,6 @@ void runMainLoop(GLFWwindow *window) {
     CubicSpline spline;
     spline
         .addControlPoint(-1.0, -1.0)
-        // .addControlPoint(-0.75, -1.0)
         .addControlPoint(-0.5, -0.5)
         .addControlPoint(0.0, -0.1)
         .addControlPoint(0.5, 0.8)
@@ -124,7 +123,7 @@ void runMainLoop(GLFWwindow *window) {
 
     CurveDisplay curve_disp{spline, -1.0, 1.0, -1.0, 1.0, 1000};
     Terrain terrain{curved_noise};
-    // Ocean ocean = Ocean::createOcean();
+    Ocean ocean;
 
     ViewAndProjectionBlock vp_block{};
     static float angle = 0.0;
@@ -153,7 +152,7 @@ void runMainLoop(GLFWwindow *window) {
         vp_block.bind();
         light_block.bind();
         terrain.render(model2);
-        // ocean.render(model2);
+        ocean.render(model2);
         vp_block.unbind();
         light_block.unbind();
 
