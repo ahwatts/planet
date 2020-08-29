@@ -127,7 +127,7 @@ void runMainLoop(GLFWwindow *window) {
         .addControlPoint(1.0, 1.2);
     const Curve curved_noise{octave_noise, spline};
 
-    CurveDisplay curve_disp{spline, -1.0, 1.0, -1.0, 1.0, 1000};
+    // CurveDisplay curve_disp{spline, -1.0, 1.0, -1.0, 1.0, 1000};
     Terrain terrain{curved_noise};
     Ocean ocean;
 
@@ -162,7 +162,7 @@ void runMainLoop(GLFWwindow *window) {
         vp_block.unbind();
         light_block.unbind();
 
-        curve_disp.render();
+        // curve_disp.render();
 
         glfwSwapBuffers(window);
 

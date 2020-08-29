@@ -48,8 +48,8 @@ add_executable(planet
   src/Terrain.cpp
   src/planet.cpp
   ${SHADERS})
-target_compile_features(planet PUBLIC cxx_std_14)
 target_include_directories(planet PUBLIC vendor/embed-resource)
+target_compile_features(planet PUBLIC cxx_std_14)
 target_compile_options(planet PRIVATE
     "$<${gcc_like_cxx}:-Wall>"
     "$<$<AND:${gcc_like_cxx},$<CONFIG:Debug>>:-Og;-ggdb>"

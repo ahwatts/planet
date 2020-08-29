@@ -1,5 +1,6 @@
 // -*- mode: c++; c-basic-offset: 4; indent-tabs-mode: nil; -*-
 
+#include <random>
 #include <vector>
 
 #include "glm_defines.h"
@@ -61,13 +62,13 @@ Ocean::~Ocean() {
             glDeleteShader(m_vertex_shader);
         }
         m_vertex_shader = 0;
-        
+
         if (glIsShader(m_fragment_shader)) {
             glDetachShader(m_program, m_fragment_shader);
             glDeleteShader(m_fragment_shader);
         }
         m_fragment_shader = 0;
-        
+
         glDeleteProgram(m_program);
     }
 
@@ -101,13 +102,23 @@ void Ocean::render(const glm::mat4x4 &model) const {
 }
 
 void Ocean::initGeometry() {
+    std::random_device seed;
+    std::default_random_engine eng{seed()};
+    std::uniform_real_distribution<float> dist{0.995f, 1.005f};
     PositionsAndElements sphere = icosphere(1.97f, 5);
     m_vertices.resize(sphere.positions.size());
     m_indices = sphere.elements;
 
     for (unsigned int i = 0; i < sphere.positions.size(); ++i) {
+        float factor = dist(eng);
+        sphere.positions[i] *= factor;
+    }
+
+    std::vector<glm::vec3> normals = computeNormals(sphere);
+
+    for (unsigned int i = 0; i < sphere.positions.size(); ++i) {
         glm::vec3 &pos = sphere.positions[i];
-        glm::vec3 norm = glm::normalize(pos);
+        glm::vec3 &norm = normals[i];
         m_vertices[i] = {
             { pos.x, pos.y, pos.z },
             { 0.2f, 0.3f, 0.6f, 1.0f },
