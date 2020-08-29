@@ -49,18 +49,14 @@ add_executable(planet
   src/planet.cpp
   ${SHADERS})
 target_compile_features(planet PUBLIC cxx_std_14)
+target_include_directories(planet PUBLIC vendor/embed-resource)
 target_compile_options(planet PRIVATE
     "$<${gcc_like_cxx}:-Wall>"
     "$<$<AND:${gcc_like_cxx},$<CONFIG:Debug>>:-Og;-ggdb>"
     "$<${msvc_cxx}:/W4>")
-target_include_directories(planet PUBLIC vendor/embed-resource)
 target_link_libraries(planet PUBLIC
     glad
     glfw
     ${glm_library})
-
-# if(CMAKE_COMPILER_IS_GNUCXX)
-#     target_compile_options(planet PUBLIC "-Wall" "-Og" "-ggdb")
-#     # target_compile_options(planet PUBLIC "-Wall" "-Og" "-pg" "-ggdb")
-#     # set_target_properties(planet PROPERTIES LINK_FLAGS "-pg")
-# endif()
+target_link_options(planet PRIVATE
+    "$<$<AND:${gcc_like_cxx},$<PLATFORM_ID:Windows>>:-static-libgcc;-static-libstdc++;-static>")
