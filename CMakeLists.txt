@@ -1,7 +1,8 @@
 cmake_minimum_required(VERSION 3.11.0)
 project(planet)
-set(gcc_like_cxx "$<COMPILE_LANG_AND_ID:CXX,AppleClang,Clang,GNU>")
-set(msvc_cxx "$<COMPILE_LANG_AND_ID:CXX,MSVC>")
+
+set(gcc_like_cxx "$<IN_LIST:$<CXX_COMPILER_ID>,AppleClang;Clang;GNU>")
+set(msvc_cxx "$<IN_LIST:$<CXX_COMPILER_ID>,MSVC>")
 
 if(WIN32)
     if (CMAKE_COMPILER_IS_GNUCXX)
@@ -31,23 +32,23 @@ add_subdirectory(vendor/embed-resource)
 add_subdirectory(vendor/glad)
 
 embed_resources(SHADERS
-  src/shaders/curve.vert
-  src/shaders/curve.frag
-  src/shaders/ocean.vert
-  src/shaders/ocean.frag
-  src/shaders/terrain.vert
-  src/shaders/terrain.frag)
+    src/shaders/curve.vert
+    src/shaders/curve.frag
+    src/shaders/ocean.vert
+    src/shaders/ocean.frag
+    src/shaders/terrain.vert
+    src/shaders/terrain.frag)
 
 add_executable(planet
-  src/Curve.cpp
-  src/Models.cpp
-  src/Noise.cpp
-  src/Ocean.cpp
-  src/OpenGLUtils.cpp
-  src/SharedBlocks.cpp
-  src/Terrain.cpp
-  src/planet.cpp
-  ${SHADERS})
+    src/Curve.cpp
+    src/Models.cpp
+    src/Noise.cpp
+    src/Ocean.cpp
+    src/OpenGLUtils.cpp
+    src/SharedBlocks.cpp
+    src/Terrain.cpp
+    src/planet.cpp
+    ${SHADERS})
 target_include_directories(planet PUBLIC vendor/embed-resource)
 target_compile_features(planet PUBLIC cxx_std_14)
 target_compile_options(planet PRIVATE
