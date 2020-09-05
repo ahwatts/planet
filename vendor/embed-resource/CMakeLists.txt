@@ -1,10 +1,3 @@
-# cmake_minimum_required(VERSION 3.5)
-# project(EmbedResource)
-
-# if(WIN32 AND CMAKE_COMPILER_IS_GNUCXX)
-#     set(CMAKE_PREFIX_PATH "${CMAKE_PREFIX_PATH};../../../deps/boost-msys")
-# endif()
-
 function(embed_resources out_var)
     set(result)
     foreach(in_f ${ARGN})
@@ -23,4 +16,7 @@ endfunction()
 
 add_executable(embed-resource embedresource.cpp)
 target_include_directories(embed-resource PUBLIC .)
+target_compile_features(embed-resource PRIVATE cxx_std_14)
+target_compile_options(embed-resource
+    PUBLIC "$<$<CXX_COMPILER_ID:AppleClang>:-fvisibility=hidden>")
 target_link_libraries(embed-resource PUBLIC Boost::filesystem)

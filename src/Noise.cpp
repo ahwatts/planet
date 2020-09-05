@@ -47,7 +47,7 @@ Perlin::Perlin(double x_scale, double y_scale, double z_scale)
       m_z_scale{z_scale}
 {}
 
-Perlin::~Perlin() {}
+Perlin::~Perlin() noexcept {}
 
 void Perlin::setScales(double x, double y) {
     m_x_scale = x;
