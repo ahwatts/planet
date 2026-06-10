@@ -3,3 +3,5 @@
 /.vscode
 /.dir-locals.el
 gmon.out
+CMakeUserPresets.json
+/out

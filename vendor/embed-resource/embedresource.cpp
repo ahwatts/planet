@@ -1,49 +1,58 @@
-#include <boost/filesystem.hpp>
-#include <boost/filesystem/fstream.hpp>
-#include <iostream>
+// -*- mode: c++; c-basic-offset: 4; encoding: utf-8; -*-
 
-using namespace std;
-using namespace boost::filesystem;
+#include <algorithm>
+#include <filesystem>
+#include <format>
+#include <fstream>
+#include <iostream>
 
 int main(int argc, char** argv) {
     if (argc < 3) {
-        fprintf(stderr, "USAGE: %s {sym} {rsrc}\n\n"
-                        "  Creates {sym}.cpp from the contents of {rsrc}\n",
-                argv[0]);
-        return EXIT_FAILURE;
+        std::cerr << std::format("USAGE: {} sym rsrc [--bin]\n\n  Creates {{sym}}.cpp from the contents of {{rsrc}}", argv[0]) << std::endl;
+        return 1;
     }
 
-    path dst{argv[1]};
-    path src{argv[2]};
+    bool bin_mode = false;
+    if (argc > 3) {
+        std::string bin_arg{argv[3]};
+        if (bin_arg == "--bin") {
+            bin_mode = true;
+        }
+    }
 
-    string sym = src.filename().string();
-    replace(sym.begin(), sym.end(), '.', '_');
-    replace(sym.begin(), sym.end(), '-', '_');
+    std::filesystem::path dst{argv[1]};
+    std::filesystem::path src{argv[2]};
 
-    create_directories(dst.parent_path());
+    std::string sym = src.filename().string();
+    std::replace(sym.begin(), sym.end(), '.', '_');
+    std::replace(sym.begin(), sym.end(), '-', '_');
 
-    boost::filesystem::ofstream ofs{dst};
+    std::filesystem::create_directories(dst.parent_path());
 
-    boost::filesystem::ifstream ifs{src};
+    std::ofstream ofs{dst};
 
-    ofs << "#include <cstdlib>" << endl;
-    ofs << "extern const char _resource_" << sym << "[] = {" << endl;
+    auto mode = std::ios::ate;
+    if (bin_mode) { mode |= std::ios::binary; }
+    std::ifstream ifs{src, mode};
+    auto file_size = ifs.tellg();
+    std::vector<char> data(file_size);
+    ifs.seekg(0, std::ios::beg);
+    ifs.read(data.data(), file_size);
+    ifs.close();
+
+    ofs << "#include <vector>\n";
+    ofs << "extern const std::vector<char> _resource_" << sym << " = {\n";
 
     size_t lineCount = 0;
-    while (!ifs.eof())
-    {
-        char c;
-        ifs.get(c);
-        ofs << "0x" << hex << (c&0xff) << ", ";
+    for (auto c : data) {
+        ofs << std::hex << std::showbase << (c & 0xff) << ", ";
         if (++lineCount == 10) {
-            ofs << endl;
+            ofs << "\n";
             lineCount = 0;
         }
     }
 
+    ofs << "};" << std::endl;
 
-    ofs << "};" << endl;
-    ofs << "extern const std::size_t _resource_" << sym << "_len = sizeof(_resource_" << sym << ");";
-
-    return EXIT_SUCCESS;
+    return 0;
 }

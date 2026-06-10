@@ -196,11 +196,11 @@ void CurveDisplay::initBuffer() {
 }
 
 void CurveDisplay::initProgram() {
-    Resource vert_code = LOAD_RESOURCE(curve_vert);
-    Resource frag_code = LOAD_RESOURCE(curve_frag);
+    const std::vector<char> &vert_code = LOAD_RESOURCE(curve_vert);
+    const std::vector<char> &frag_code = LOAD_RESOURCE(curve_frag);
 
-    m_vertex_shader = createAndCompileShader(GL_VERTEX_SHADER, vert_code.toString().data());
-    m_fragment_shader = createAndCompileShader(GL_FRAGMENT_SHADER, frag_code.toString().data());
+    m_vertex_shader = createAndCompileShader(GL_VERTEX_SHADER, vert_code.data());
+    m_fragment_shader = createAndCompileShader(GL_FRAGMENT_SHADER, frag_code.data());
     m_program = createProgramFromShaders(m_vertex_shader, m_fragment_shader);
     m_position_loc = 0;
 }

@@ -151,11 +151,11 @@ void Ocean::initBuffers() {
 }
 
 void Ocean::initProgram() {
-    Resource vert_code = LOAD_RESOURCE(ocean_vert);
-    Resource frag_code = LOAD_RESOURCE(ocean_frag);
+    const std::vector<char> &vert_code = LOAD_RESOURCE(ocean_vert);
+    const std::vector<char> &frag_code = LOAD_RESOURCE(ocean_frag);
 
-    m_vertex_shader = createAndCompileShader(GL_VERTEX_SHADER, vert_code.toString().data());
-    m_fragment_shader = createAndCompileShader(GL_FRAGMENT_SHADER, frag_code.toString().data());
+    m_vertex_shader = createAndCompileShader(GL_VERTEX_SHADER, vert_code.data());
+    m_fragment_shader = createAndCompileShader(GL_FRAGMENT_SHADER, frag_code.data());
     m_program = createProgramFromShaders(m_vertex_shader, m_fragment_shader);
     LightListBlock::setOffsets(m_program, "LightListBlock");
     m_position_loc = 0;
