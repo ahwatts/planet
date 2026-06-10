@@ -202,19 +202,22 @@ double Octave::operator()(double x, double y) const {
 
 double Octave::operator()(double x, double y, double z) const {
     double total = 0;
-    double frequency = 1;
+    // double frequency = 1;
     double amplitude = 1;
-    double max_value = 0;
+    // double max_value = 0;
+    double freq_factor = 1.0 / m_persistence;
 
     for (int i = 0; i < m_octaves; ++i) {
-        total += m_noise(x * frequency, y * frequency, z * frequency) * amplitude;
-        max_value += amplitude;
+        total += m_noise(x, y, z) * amplitude;
+        // max_value += amplitude;
         amplitude *= m_persistence;
-        frequency *= 2;
+        x *= freq_factor;
+        y *= freq_factor;
+        z *= freq_factor;
     }
 
-    double rv = total / max_value;
-    return rv;
+    // double rv = total / max_value;
+    return total;
 }
 
 Curve::Curve(const NoiseFunction &base, const CubicSpline &curve)

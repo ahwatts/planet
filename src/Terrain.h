@@ -22,7 +22,7 @@ struct TerrainVertex {
 
 class Terrain {
 public:
-    Terrain(const NoiseFunction &noise);
+    Terrain(float radius, int refinements, const NoiseFunction &noise);
     Terrain(const Terrain &other) = delete;
     Terrain(Terrain &&other) = delete;
     ~Terrain();
@@ -35,7 +35,7 @@ public:
 private:
     Terrain();
 
-    void initGeometry(const NoiseFunction &noise);
+    void initGeometry(float radius, int refinements, const NoiseFunction &noise);
     void initBuffers();
     void initProgram();
     void initVAO();

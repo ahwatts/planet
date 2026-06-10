@@ -32,8 +32,8 @@ Terrain::Terrain()
       m_array_object{0}
 {}
 
-Terrain::Terrain(const NoiseFunction &noise): Terrain() {
-    initGeometry(noise);
+Terrain::Terrain(float radius, int refinements, const NoiseFunction &noise): Terrain() {
+    initGeometry(radius, refinements, noise);
     initBuffers();
     initProgram();
     initVAO();
@@ -82,9 +82,9 @@ Terrain::~Terrain() {
     m_array_object = 0;
 }
 
-void Terrain::initGeometry(const NoiseFunction &noise) {
+void Terrain::initGeometry(float radius, int refinements, const NoiseFunction &noise) {
     // Create a sphere from an icosahredron.
-    PositionsAndElements sphere = icosphere(2.0, 5);
+    PositionsAndElements sphere = icosphere(radius, refinements);
 
     // Adjust the vertex positions with some noise.
     for (unsigned int i = 0; i < sphere.positions.size(); ++i) {

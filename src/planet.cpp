@@ -115,20 +115,20 @@ void keypress(GLFWwindow *window, int key, int scancode, int action, int mode) {
 }
 
 void runMainLoop(GLFWwindow *window) {
-    const Perlin base_noise{2.0, 2.0, 2.0};
-    const Octave octave_noise{base_noise, 4, 0.3};
+    const Perlin base_noise{};
+    const Octave octave_noise{base_noise, 3, 0.5};
     CubicSpline spline;
     spline
         .addControlPoint(-1.0, -1.0)
         .addControlPoint(-0.5, -0.5)
         .addControlPoint(0.0, -0.1)
-        .addControlPoint(0.5, 0.8)
-        .addControlPoint(0.75, 1.2)
-        .addControlPoint(1.0, 1.2);
+        .addControlPoint(0.6, 0.6)
+        .addControlPoint(0.9, 1.1)
+        .addControlPoint(1.0, 1.1);
     const Curve curved_noise{octave_noise, spline};
 
-    // CurveDisplay curve_disp{spline, -1.0, 1.0, -1.0, 1.0, 1000};
-    Terrain terrain{curved_noise};
+    CurveDisplay curve_disp{spline, -1.0, 1.0, -1.0, 1.0, 1000};
+    Terrain terrain{2.0, 5, curved_noise};
     Ocean ocean;
 
     ViewAndProjectionBlock vp_block{};
@@ -162,7 +162,7 @@ void runMainLoop(GLFWwindow *window) {
         vp_block.unbind();
         light_block.unbind();
 
-        // curve_disp.render();
+        curve_disp.render();
 
         glfwSwapBuffers(window);
 
